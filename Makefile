@@ -1,5 +1,7 @@
 CC = mpicc
 CXX = mpic++  
+# CC = gcc
+# CXX = g++  
 CFLAGS = -Wall -Wextra -Wno-unused-result -Wno-unused-parameter -Wno-unused-but-set-variable -O3 -g
 CXXFLAGS = $(CFLAGS) -std=c++11
 

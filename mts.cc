@@ -20,8 +20,10 @@ static int col_ind[max_n_elements];
 static int row_ptr_begin[max_n_rows];
 static int row_ptr_end[max_n_rows];
 
-static int elements[max_n_rows];
-map<int, bool> visited_nodes;
+static int nieghbours[max_n_rows];
+queue<int> to_visit;
+static bool visited_nodes[max_n_rows];
+
 
 
 double retrive_value(int row, int column){
@@ -34,10 +36,10 @@ double retrive_value(int row, int column){
 }
 
 void breath_first_search(int starting_node){
-  fprintf(stderr,"Rec start end %d \n",starting_node);
+  // fprintf(stderr,"Rec start end %d \n",starting_node);
   visited_nodes[starting_node] = true;
 
-  int nieghbours[max_n_rows];
+
   int nieghbours_found = 0;
   for(int j = 0; j< n_rows; j++){
     if (retrive_value(starting_node,j) != 0){
@@ -52,8 +54,8 @@ void breath_first_search(int starting_node){
     fprintf(stderr,"Found %d \n",nieghbours[i]);
   }
   for(int i = 0; i< nieghbours_found; i++){
-    fprintf(stderr, "Sanity check\n");
-    fprintf(stderr,"Rec start acces %d %d \n",i,nieghbours[i]);
+    // fprintf(stderr, "Sanity check\n");
+    // fprintf(stderr,"Rec start acces %d %d \n",i,nieghbours[i]);
     breath_first_search(nieghbours[i]);
     
   }
