@@ -1,0 +1,17 @@
+%%MatrixMarket matrix coordinate integer symmetric
+%-------------------------------------------------------------------------------
+% UF Sparse Matrix Collection, Tim Davis
+% http://www.cise.ufl.edu/research/sparse/matrices/Gaertner/nopoly
+% name: Gaertner/nopoly
+% [Structuresymmetric Matrix nopoly K. Gaertner ETH Zurich Jan 1998.]
+% id: 442
+% date: 2001
+% author: K. Gaertner
+% ed: F. Grund
+% fields: title A name id date author ed kind
+% kind: undirected weighted graph
+%-------------------------------------------------------------------------------
+3 3 3
+1 2 1
+2 3 2
+3 1 3
