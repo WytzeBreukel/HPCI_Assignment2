@@ -23,6 +23,7 @@ queue<int> to_visit;
 static bool visited_nodes[max_n_rows];
 
 static bool merged[max_n_rows];
+static bool touched[max_n_rows];
 
 int last_row_ptr_index = 0;
 
@@ -112,8 +113,20 @@ void breath_first_search(int starting_node){
   }
 }
 void merge_nodes(int i, int j){
-  fprintf(stderr, "mimimum spanning tree part : %d %d", i, j);
-  
+  fprintf(stderr, "mimimum spanning tree part : %d %d \n", i, j);
+  merged[j] = true;
+  for(int k = 0; k < n_rows; k++){
+    if(k == j || k == i){
+      insert_value(i,k,0);
+      continue;
+    }
+    int node_i_value = retrive_value(i,k);
+    int node_j_value = retrive_value(j,k);
+    if(node_j_value != 0 && node_i_value > node_j_value){
+      insert_value(i,k,node_j_value);
+    };
+
+  }
 
 }
 
@@ -123,7 +136,7 @@ void boruvka(){
     int lowest_weight = 2147483647;
     int lowest_node = -1;
     for(int j = 0; j<n_rows; j++){
-      if(!merged[j]){
+      if(!merged[j] && !touched[j]){
         int weight =  retrive_value(i,j);
         if(weight != 0 && weight < lowest_weight){
           lowest_weight = weight;
@@ -132,13 +145,14 @@ void boruvka(){
       }
     }
     if(lowest_node == -1){
-      fprintf(stderr,"Unconnected");
+      fprintf(stderr,"Unconnected\n");
       throw;
     }
-    // fprintf(stderr, "lowest node %d value %d \n",lowest_node, lowest_weight);
+    fprintf(stderr, "lowest node %d value %d \n",lowest_node, lowest_weight);
     merge_nodes(i,lowest_node);
-    
+    touched[i] = true;  
   }
+
 
 }
 int
