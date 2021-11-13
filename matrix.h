@@ -2,7 +2,7 @@
 #define __MATRIX_H__
 
 void dump_nonzeros(const int     n_rows,
-                   const double  values[],
+                   const int  values[],
                    const int     col_ind[],
                    const int     row_ptr_begin[],
                    const int     row_ptr_end[]);
@@ -13,7 +13,7 @@ bool load_matrix_market(const char *filename,
                         int        &nnz,
                         int        &n_rows,
                         int        &n_cols,
-                        double      values[],
+                        int      values[],
                         int         col_ind[],
                         int         row_ptr_begin[],
                         int         row_ptr_end[]);
