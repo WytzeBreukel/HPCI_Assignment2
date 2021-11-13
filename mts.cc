@@ -53,10 +53,10 @@ int retrive_value(int row, int column){
 }
 
 void insert_value(int row, int column, int value){
-  fprintf(stderr,"Inserting %d at %d %d\n", value,row,column);
+  // fprintf(stderr,"Inserting %d at %d %d\n", value,row,column);
   for(int idx = row_ptr_begin[row]; idx <= row_ptr_end[row]; idx++){
     if(column == col_ind[idx]){
-      fprintf(stderr, "%d %d exists \n",row,column);
+      // fprintf(stderr, "%d %d exists \n",row,column);
       values[idx] = value;
       return;
     }
@@ -67,7 +67,7 @@ void insert_value(int row, int column, int value){
   }
 
   int new_begin_ptr = row_ptr_end[last_row_ptr_index]+1;
-  fprintf(stderr,"New begin pointer  %d\n", new_begin_ptr);
+  // fprintf(stderr,"New begin pointer  %d\n", new_begin_ptr);
   if(last_row_ptr_index == row){
 
      new_begin_ptr = row_ptr_begin[last_row_ptr_index];
@@ -152,27 +152,18 @@ void merge_nodes(int i, int j){
     if( node_i_value != max_int){
       //xor 8              0                0
       if(node_i_value > node_j_value && node_j_value !=0 ){
-      fprintf(stderr, "insreting A %d for %d %d ivalue %d\n",node_j_value,i ,k,node_i_value);
+      // fprintf(stderr, "insreting A %d for %d %d ivalue %d\n",node_j_value,i ,k,node_i_value);
       insert_value(i,k,node_j_value);
       }
       else if(node_i_value == 0) {
-        fprintf(stderr, "insreting %d for %d %d ivalue %d\n",node_j_value,i ,k,node_i_value);
-        get_neighbours(3);
-        status_update();
+        // fprintf(stderr, "insreting %d for %d %d ivalue %d\n",node_j_value,i ,k,node_i_value);
         insert_value(i,k,node_j_value);
-        get_neighbours(3);
-        status_update();
-        if(node_j_value == 6 && i == 2){
-          throw;
-        }
-
       }
     
     };
-    // throw;
+ 
 
   }
-  // get_neighbours(i);
 }
 void set_up_merged(){
   for(int i = 0; i<n_rows; i++){
@@ -184,41 +175,40 @@ void boruvka(){
   set_up_merged();
   for(int i = 0; i < n_rows; i++){
     //Gives problems if things are super huge more than maxint on non connected
-    fprintf(stderr, "Handleing %d\n",i);
-    get_neighbours(3);
+    fprintf(stderr, "\n\n\n\n\n\n\nHandleing %d\n",i);
     if(merged_to[i] == i){
-    int lowest_weight = max_int;
-    int lowest_node = -1;
-    for(int j = 0; j<n_rows; j++){
-        int weight =  retrive_value(i,j);
-        //last one prob uneccary
-        if(weight != 0 && weight < lowest_weight && weight != max_int){
-          lowest_weight = weight;
-          lowest_node = j;
+      int lowest_weight = max_int;
+      int lowest_node = -1;
+      for(int j = 0; j<n_rows; j++){
+          int weight =  retrive_value(i,j);
+          //last one prob uneccary
+          if(weight != 0 && weight < lowest_weight && weight != max_int){
+            lowest_weight = weight;
+            lowest_node = j;
+          }
         }
+      if(lowest_node == -1){
+        fprintf(stderr,"Unconnected\n");
+        throw;
       }
-    if(lowest_node == -1){
-      fprintf(stderr,"Unconnected\n");
-      throw;
-    }
-    if(merged_to[i] != lowest_node){
-      fprintf(stderr, "lowest node %d value %d \n",lowest_node, lowest_weight);
-      fprintf(stderr, "mimimum spanning tree part : unmodified %d %d \n", i, lowest_node);
-      merge_nodes(merged_to[i],lowest_node);
-      // get_neighbours(3);
-    }else{
-      fprintf(stderr, "Skipping because %d  is already merged with %d \n",i,lowest_node);
-    }
- 
-    if(i == 0){
-      status_update();
-      throw;
-    }
-    // touched[i] = true;  
+      if(merged_to[i] != lowest_node){
+        fprintf(stderr, "lowest node %d value %d \n",lowest_node, lowest_weight);
+        fprintf(stderr, "mimimum spanning tree part : unmodified %d %d \n", i, lowest_node);
+        merge_nodes(merged_to[i],lowest_node);
+      
+      }else{
+        fprintf(stderr, "Skipping because %d  is already merged with %d \n",i,lowest_node);
+      }
+  
   }else{
-    fprintf(stderr, "MERGED %d \n",i);
+    fprintf(stderr, "Already skipping MERGED %d \n",i);
+  }
+   if(i == 7){
+     get_neighbours(i);
+     throw;
   }
   }
+ 
 
 
 }
@@ -248,8 +238,7 @@ main(int argc, char **argv)
   // dump_nonzeros(n_rows, values, col_ind, row_ptr_begin, row_ptr_end);
 
   // fprintf(stderr, " \n %d \n", retrive_value(1,2));
-  status_update();
-  // get_neighbours(3);
+
   boruvka();
   
 
