@@ -1,5 +1,5 @@
 #include <chrono>
-
+#include<tuple>
 #include <cstdio>
 #include <queue>
 #include "matrix.h"
@@ -23,6 +23,8 @@ queue<int> to_visit;
 static bool visited_nodes[max_n_rows];
 
 static int merged_to[max_n_rows];
+static tuple<int,int> merge_queue[max_n_rows];
+int amount_of_merges = 0;
 // static bool touched[max_n_rows];
 
 //DONT forget to set this!
@@ -130,6 +132,10 @@ void breath_first_search(int starting_node){
   }
 }
 
+void clear_merge_queue(){
+  std::fill(merge_queue, merge_queue+amount_of_merges, make_tuple(0,0));
+}
+
 void get_neighbours(int node){
  fprintf(stderr, "FOR %d \n",node);
   for(int k = 0; k< n_rows;k++){
@@ -150,12 +156,12 @@ void merge_nodes(int i, int j){
     int node_i_value = retrive_value(i,k); 
     int node_j_value = retrive_value(j,k); 
     if( node_i_value != max_int){
-      //xor 8              0                0
+      // 8              9999                0
       if(node_i_value > node_j_value && node_j_value !=0 ){
       // fprintf(stderr, "insreting A %d for %d %d ivalue %d\n",node_j_value,i ,k,node_i_value);
       insert_value(i,k,node_j_value);
       }
-      else if(node_i_value == 0) {
+      else if(node_i_value == 0 || node_j_value == max_int) {
         // fprintf(stderr, "insreting %d for %d %d ivalue %d\n",node_j_value,i ,k,node_i_value);
         insert_value(i,k,node_j_value);
       }
@@ -170,43 +176,81 @@ void set_up_merged(){
     merged_to[i] = i;
   }
 }
+void add_to_merge_queue(tuple<int,int> merge){
+  for(int i = 0; i< amount_of_merges; i++){
+    if (merge_queue[i] == merge)
+    {
+      fprintf(stderr, "Already in here\n");
+      return;
+    }
+  }
+  merge_queue[amount_of_merges] = merge;
+  amount_of_merges += 1;
 
+}
+void check_merge_queue(){
+  fprintf(stderr,"MERGE QUEUE \n");
+  for(int i = 0; i < amount_of_merges; i++){
+    fprintf(stderr, " %d %d \n", get<0>(merge_queue[i]) , get<1>(merge_queue[i]));
+  }
+}
+void preform_merges(){
+  for(int i =0; i< amount_of_merges; i++){
+    merge_nodes(merged_to[get<0>(merge_queue[i])], get<1>(merge_queue[i]));
+  }
+
+  for(int i =0; i<amount_of_merges; i++){
+    if(merged_to[i] == i){
+      get_neighbours(i);
+    }
+  }
+}
 void boruvka(){
   set_up_merged();
-  for(int i = 0; i < n_rows; i++){
-    //Gives problems if things are super huge more than maxint on non connected
-    fprintf(stderr, "\n\n\n\n\n\n\nHandleing %d\n",i);
-    if(merged_to[i] == i){
-      int lowest_weight = max_int;
-      int lowest_node = -1;
-      for(int j = 0; j<n_rows; j++){
-          int weight =  retrive_value(i,j);
-          //last one prob uneccary
-          if(weight != 0 && weight < lowest_weight && weight != max_int){
-            lowest_weight = weight;
-            lowest_node = j;
-          }
-        }
-      if(lowest_node == -1){
-        fprintf(stderr,"Unconnected\n");
-        throw;
-      }
-      if(merged_to[i] != lowest_node){
-        fprintf(stderr, "lowest node %d value %d \n",lowest_node, lowest_weight);
-        fprintf(stderr, "mimimum spanning tree part : unmodified %d %d \n", i, lowest_node);
-        merge_nodes(merged_to[i],lowest_node);
+  for(int i =0; i<3; i++){
+    amount_of_merges = 0;
+    clear_merge_queue();
+    for(int i = 0; i < n_rows; i++){
       
-      }else{
-        fprintf(stderr, "Skipping because %d  is already merged with %d \n",i,lowest_node);
-      }
-  
-  }else{
-    fprintf(stderr, "Already skipping MERGED %d \n",i);
-  }
-   if(i == 7){
-     get_neighbours(i);
-     throw;
-  }
+      //Gives problems if things are super huge more than maxint on non connected
+      fprintf(stderr, "\n\n\nHandleing %d\n",i);
+      if(merged_to[i] == i){
+        int lowest_weight = max_int;
+        int lowest_node = -1;
+        for(int j = 0; j<n_rows; j++){
+            int weight = retrive_value(i,j);
+            //last one prob uneccary
+            if(weight != 0 && weight < lowest_weight && weight != max_int){
+              lowest_weight = weight;
+              lowest_node = j;
+            }
+          }
+        if(lowest_node == -1){
+          fprintf(stderr,"Unconnected\n");
+          throw;
+        }
+        // if(merged_to[i] != lowest_node){
+        //   fprintf(stderr, "lowest node %d value %d \n",lowest_node, lowest_weight);
+        //   fprintf(stderr, "mimimum spanning tree part : unmodified %d %d \n", i, lowest_node);
+        //   merge_nodes(merged_to[i],lowest_node);
+        
+        // }else{
+        //   fprintf(stderr, "Skipping because %d  is already merged with %d \n",i,lowest_node);
+        // }
+        tuple<int,int> merge;
+        if(i > lowest_node){
+          merge =  make_tuple(lowest_node,i);
+        }else{
+          merge =  make_tuple(i, lowest_node);
+        }
+        add_to_merge_queue(merge);
+        
+    }else{
+      fprintf(stderr, "Already skipping MERGED %d \n",i);
+    }
+    }
+    check_merge_queue();
+    preform_merges();
   }
  
 
@@ -238,7 +282,8 @@ main(int argc, char **argv)
   // dump_nonzeros(n_rows, values, col_ind, row_ptr_begin, row_ptr_end);
 
   // fprintf(stderr, " \n %d \n", retrive_value(1,2));
-
+  status_update();
+  throw;
   boruvka();
   
 
