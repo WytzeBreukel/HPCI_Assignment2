@@ -25,6 +25,7 @@ static bool visited_nodes[max_n_rows];
 static int merged_to[max_n_rows];
 static tuple<int,int> merge_queue[max_n_rows];
 int amount_of_merges = 0;
+// int total_amount_of_merges = 0;
 // static bool touched[max_n_rows];
 
 //DONT forget to set this!
@@ -144,9 +145,7 @@ void get_neighbours(int node){
 }
 void merge_nodes(int i, int j){
   
-  fprintf(stderr, "mimimum spanning tree part : modified %d %d \n", i, j);
-  // get_neighbours(i);
-  // get_neighbours(j);
+  // fprintf(stderr, "mimimum spanning tree part : modified %d %d \n", i, j);
   merged_to[j] = i;
   for(int k = 0; k < n_rows; k++){
     if(k == j || k == i){
@@ -180,7 +179,7 @@ void add_to_merge_queue(tuple<int,int> merge){
   for(int i = 0; i< amount_of_merges; i++){
     if (merge_queue[i] == merge)
     {
-      fprintf(stderr, "Already in here\n");
+      // fprintf(stderr, "Already in here\n");
       return;
     }
   }
@@ -196,14 +195,15 @@ void check_merge_queue(){
 }
 void preform_merges(){
   for(int i =0; i< amount_of_merges; i++){
+    fprintf(stderr, "in mst %d %d \n",get<0>(merge_queue[i]), get<1>(merge_queue[i]));
     merge_nodes(merged_to[get<0>(merge_queue[i])], get<1>(merge_queue[i]));
   }
 
-  for(int i =0; i<amount_of_merges; i++){
-    if(merged_to[i] == i){
-      get_neighbours(i);
-    }
-  }
+  // for(int i =0; i<amount_of_merges; i++){
+  //   if(merged_to[i] == i){
+  //     get_neighbours(i);
+  //   }
+  // }
 }
 void boruvka(){
   set_up_merged();
@@ -213,7 +213,7 @@ void boruvka(){
     for(int i = 0; i < n_rows; i++){
       
       //Gives problems if things are super huge more than maxint on non connected
-      fprintf(stderr, "\n\n\nHandleing %d\n",i);
+      // fprintf(stderr, "\n\n\nHandleing %d\n",i);
       if(merged_to[i] == i){
         int lowest_weight = max_int;
         int lowest_node = -1;
@@ -226,7 +226,7 @@ void boruvka(){
             }
           }
         if(lowest_node == -1){
-          fprintf(stderr,"Unconnected\n");
+          fprintf(stderr,"Unconnected or Done?\n");
           throw;
         }
         // if(merged_to[i] != lowest_node){
@@ -246,10 +246,10 @@ void boruvka(){
         add_to_merge_queue(merge);
         
     }else{
-      fprintf(stderr, "Already skipping MERGED %d \n",i);
+      // fprintf(stderr, "Already skipping MERGED %d \n",i);
     }
     }
-    check_merge_queue();
+    // check_merge_queue();
     preform_merges();
   }
  
@@ -282,8 +282,6 @@ main(int argc, char **argv)
   // dump_nonzeros(n_rows, values, col_ind, row_ptr_begin, row_ptr_end);
 
   // fprintf(stderr, " \n %d \n", retrive_value(1,2));
-  status_update();
-  throw;
   boruvka();
   
 
