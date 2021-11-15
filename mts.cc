@@ -10,7 +10,8 @@ using namespace std;
  * subscripts. Do not use pointers.
  */
 
-const int max_n_elements = 131072;
+const int max_n_elements = 214748364;
+// const int max_n_elements = 131072;
 const int max_n_rows = 16384;
 int nnz, n_rows, n_cols;
 static int values[max_n_elements];
@@ -25,13 +26,13 @@ static bool visited_nodes[max_n_rows];
 static int merged_to[max_n_rows];
 static tuple<int,int> merge_queue[max_n_rows];
 int amount_of_merges = 0;
-// int total_amount_of_merges = 0;
+int total_weight = 0;
 // static bool touched[max_n_rows];
 
 //DONT forget to set this!
 int last_row_ptr_index = -1;
 
-int max_int = 2147483647;
+const int max_int = 2147483647;
 
 void status_update(){
 
@@ -195,8 +196,11 @@ void check_merge_queue(){
 }
 void preform_merges(){
   for(int i =0; i< amount_of_merges; i++){
-    fprintf(stderr, "in mst %d %d \n",get<0>(merge_queue[i]), get<1>(merge_queue[i]));
-    merge_nodes(merged_to[get<0>(merge_queue[i])], get<1>(merge_queue[i]));
+    int node_i = get<0>(merge_queue[i]);
+    int node_j = get<1>(merge_queue[i]);
+    fprintf(stderr, "in mst %d %d \n", node_i, node_j);
+    total_weight = total_weight + retrive_value(node_i,node_j);
+    merge_nodes(merged_to[node_i], node_j);
   }
 
   // for(int i =0; i<amount_of_merges; i++){
@@ -207,53 +211,53 @@ void preform_merges(){
 }
 void boruvka(){
   set_up_merged();
-  for(int i =0; i<3; i++){
+  
+  while(true){
     amount_of_merges = 0;
     clear_merge_queue();
     for(int i = 0; i < n_rows; i++){
       
-      //Gives problems if things are super huge more than maxint on non connected
-      // fprintf(stderr, "\n\n\nHandleing %d\n",i);
-      if(merged_to[i] == i){
-        int lowest_weight = max_int;
-        int lowest_node = -1;
-        for(int j = 0; j<n_rows; j++){
-            int weight = retrive_value(i,j);
-            //last one prob uneccary
-            if(weight != 0 && weight < lowest_weight && weight != max_int){
-              lowest_weight = weight;
-              lowest_node = j;
-            }
+    //Gives problems if things are super huge more than maxint on non connected
+    // fprintf(stderr, "\n\n\nHandleing %d\n",i);
+    if(merged_to[i] == i){
+      int lowest_weight = max_int;
+      int lowest_node = -1;
+      for(int j = 0; j<n_rows; j++){
+          int weight = retrive_value(i,j);
+          //last one prob uneccary
+          if(weight != 0 && weight < lowest_weight && weight != max_int){
+            lowest_weight = weight;
+            lowest_node = j;
           }
-        if(lowest_node == -1){
-          fprintf(stderr,"Unconnected or Done?\n");
-          throw;
         }
-        // if(merged_to[i] != lowest_node){
-        //   fprintf(stderr, "lowest node %d value %d \n",lowest_node, lowest_weight);
-        //   fprintf(stderr, "mimimum spanning tree part : unmodified %d %d \n", i, lowest_node);
-        //   merge_nodes(merged_to[i],lowest_node);
-        
-        // }else{
-        //   fprintf(stderr, "Skipping because %d  is already merged with %d \n",i,lowest_node);
-        // }
-        tuple<int,int> merge;
-        if(i > lowest_node){
-          merge =  make_tuple(lowest_node,i);
-        }else{
-          merge =  make_tuple(i, lowest_node);
-        }
-        add_to_merge_queue(merge);
-        
-    }else{
-      // fprintf(stderr, "Already skipping MERGED %d \n",i);
-    }
-    }
-    // check_merge_queue();
-    preform_merges();
+      if(lowest_node == -1){
+        fprintf(stderr,"Unconnected or Done Total weight: %d \n", total_weight);
+        return;
+      }
+      // if(merged_to[i] != lowest_node){
+      //   fprintf(stderr, "lowest node %d value %d \n",lowest_node, lowest_weight);
+      //   fprintf(stderr, "mimimum spanning tree part : unmodified %d %d \n", i, lowest_node);
+      //   merge_nodes(merged_to[i],lowest_node);
+      
+      // }else{
+      //   fprintf(stderr, "Skipping because %d  is already merged with %d \n",i,lowest_node);
+      // }
+      tuple<int,int> merge;
+      if(i > lowest_node){
+        merge =  make_tuple(lowest_node,i);
+      }else{
+        merge =  make_tuple(i, lowest_node);
+      }
+      add_to_merge_queue(merge);
+      
+  }else{
+    // fprintf(stderr, "Already skipping MERGED %d \n",i);
   }
- 
+  }
+  // check_merge_queue();
+  preform_merges();
 
+}
 
 }
 int
@@ -282,8 +286,11 @@ main(int argc, char **argv)
   // dump_nonzeros(n_rows, values, col_ind, row_ptr_begin, row_ptr_end);
 
   // fprintf(stderr, " \n %d \n", retrive_value(1,2));
+  auto start_time = std::chrono::high_resolution_clock::now();
   boruvka();
-  
+  auto end_time = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed_time = end_time - start_time;
+  fprintf(stdout, "%.20f\n", elapsed_time.count());
 
   return 0;
 }
