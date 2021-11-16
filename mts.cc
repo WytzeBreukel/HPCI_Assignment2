@@ -129,7 +129,8 @@ void create_structs(){
 }
 void merge(int node_a, int node_b){
     fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
-    // if(graph[node_a].size() < graph[node_b].size()){
+    //Dangerous optimazation!!!!!!!!!!!
+    // if(graph[node_a].size() > graph[node_b].size()){
     //   swap(graph[node_a], graph[node_b]);
     // }
     while(!graph[node_b].empty()){
