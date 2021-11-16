@@ -10,20 +10,6 @@ using namespace std;
  * subscripts. Do not use pointers.
  */
 
-// const int max_n_elements = 214748364;
-const int max_n_elements = 131072;
-const int max_n_rows = 16384;
-int nnz, n_rows, n_cols;
-static double values[max_n_elements];
-
-static int col_ind[max_n_elements];
-static int row_ptr_begin[max_n_rows];
-static int row_ptr_end[max_n_rows];
-
-queue<int> to_visit;
-static bool visited_nodes[max_n_rows];
-
-
 struct Edge {
     int node_a;
     int node_b;
@@ -34,6 +20,30 @@ struct Edge {
          {
     }
 };
+
+struct CompareWeight {
+    bool operator()(Edge const& edge1, Edge const& edge2)
+    {
+        return edge1.weight > edge2.weight;
+    }
+};
+// const int max_n_elements = 214748364;
+const int max_n_elements = 131072;
+const int max_n_rows = 16384;
+int nnz, n_rows, n_cols;
+static double values[max_n_elements];
+
+static int col_ind[max_n_elements];
+static int row_ptr_begin[max_n_rows];
+static int row_ptr_end[max_n_rows];
+
+static priority_queue<Edge, vector<Edge>, CompareWeight> graph[max_n_rows];
+
+queue<int> to_visit;
+static bool visited_nodes[max_n_rows];
+
+
+
 
 // void status_update(){
 
@@ -46,6 +56,9 @@ struct Edge {
 
 //   fprintf(stderr, "last status %d \n", last_row_ptr_index);
 // }
+void print_edge(Edge edge){
+  fprintf(stderr,"%d - %f - %d\n",edge.node_a, edge.weight, edge.node_b);
+}
 
 double retrive_value(int row, int column){
    for(int idx = row_ptr_begin[row]; idx <= row_ptr_end[row]; idx++){
@@ -77,11 +90,25 @@ void breath_first_search(int starting_node){
   }
 }
 
-
+void show_lowest_edge(){
+  for(int i = 0; i< n_rows; i++){
+    print_edge(graph[i].top());
+  }
+}
 void get_neighbours(int node){
  fprintf(stderr, "FOR %d \n",node);
   for(int k = 0; k< n_rows;k++){
     fprintf(stderr, "%d %f \n",k, retrive_value(node,k));
+  }
+}
+void create_structs(){
+  for(int i = 0; i < n_rows; i++){
+    for(int k = 0; k < n_rows; k++){
+      double value = retrive_value(i,k);
+      if(value != 0 ){
+        graph[i].push(Edge(i,k,retrive_value(i,k)));
+      }
+    }
   }
 }
 void boruvka(){
@@ -112,6 +139,10 @@ main(int argc, char **argv)
   // dump_nonzeros(n_rows, values, col_ind, row_ptr_begin, row_ptr_end);
 
   fprintf(stderr, " \n %f \n", retrive_value(1,2));
+  struct Edge test = Edge(1,2,3);
+  fprintf(stderr, " testing %d %d %f \n", test.node_a, test.node_b, test.weight);
+  create_structs();
+  show_lowest_edge();
   // status_update();
   auto start_time = std::chrono::high_resolution_clock::now();
   boruvka();
