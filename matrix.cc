@@ -18,9 +18,9 @@ extern "C" {
 struct Element
 {
   int row, col;
-  int val;
+  double val;
 
-  Element(int row, int col, int val) : row(row), col(col), val(val) { }
+  Element(int row, int col, double val) : row(row), col(col), val(val) { }
 };
 
 inline bool operator==(const struct Element &a, const struct Element &b)
@@ -82,7 +82,7 @@ read_matrix_market(const char *filename,
   for (int i = 0; i < nz; i++)
     {
       int row, col;
-      int val;
+      double val;
 
       if (mm_is_pattern(matcode))
         {
@@ -90,7 +90,7 @@ read_matrix_market(const char *filename,
           val = 1.0;
         }
       else
-        fscanf(fh, "%d %d %d\n", &row, &col, &val);
+        fscanf(fh, "%d %d %lg\n", &row, &col, &val);
 
       row--; /* adjust from 1-based to 0-based */
       col--;
@@ -112,7 +112,7 @@ read_matrix_market(const char *filename,
 
 static void
 load_elements(const std::vector<Element> &elements,
-              int values[],
+              double values[],
               int col_ind[],
               int row_ptr_begin[], int row_ptr_end[])
 {
@@ -146,7 +146,7 @@ load_elements(const std::vector<Element> &elements,
 
 void
 dump_nonzeros(const int n_rows,
-              const int values[],
+              const double values[],
               const int col_ind[],
               const int row_ptr_begin[],
               const int row_ptr_end[])
@@ -155,7 +155,7 @@ dump_nonzeros(const int n_rows,
     {
       for (int idx = row_ptr_begin[row]; idx <= row_ptr_end[row]; ++idx)
         {
-          fprintf(stderr, "%d %d %d\n", row, col_ind[idx], values[idx]);
+          fprintf(stderr, "%d %d %f\n", row, col_ind[idx], values[idx]);
         }
     }
 }
@@ -165,7 +165,7 @@ load_matrix_market(const char *filename,
                    const int max_n_elements,
                    const int max_n_rows,
                    int &nnz, int &n_rows, int &n_cols,
-                   int values[],
+                   double values[],
                    int col_ind[],
                    int row_ptr_begin[], int row_ptr_end[])
 {
