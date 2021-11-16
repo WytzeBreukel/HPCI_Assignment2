@@ -29,10 +29,12 @@ struct CompareWeight {
 };
 // const int max_n_elements = 214748364;
 const int max_n_elements = 131072;
-const int max_n_rows = 16384;
+// const int max_n_rows = 16384;
+const int max_n_rows = 27993600;
 int nnz, n_rows, n_cols;
 static double values[max_n_elements];
 
+static int node_location[max_n_rows];
 static int col_ind[max_n_elements];
 static int row_ptr_begin[max_n_rows];
 static int row_ptr_end[max_n_rows];
@@ -42,6 +44,7 @@ static priority_queue<Edge, vector<Edge>, CompareWeight> graph[max_n_rows];
 queue<int> to_visit;
 static bool visited_nodes[max_n_rows];
 
+static double total_weight = 0;
 
 
 
@@ -90,10 +93,23 @@ void breath_first_search(int starting_node){
   }
 }
 
+void status_merging(){
+  for(int i = 0; i <n_rows; i++){
+    fprintf(stderr,"Node %d is in component %d \n",i, node_location[i]);
+  }
+}
+
 void show_lowest_edge(){
   for(int i = 0; i< n_rows; i++){
     print_edge(graph[i].top());
   }
+}
+void show_edges(int node){
+  while(!graph[node].empty()){
+    print_edge(graph[node].top());
+    graph[node].pop();
+  }
+  throw;
 }
 void get_neighbours(int node){
  fprintf(stderr, "FOR %d \n",node);
@@ -111,8 +127,44 @@ void create_structs(){
     }
   }
 }
+void merge(int node_a, int node_b){
+    fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
+    // if(graph[node_a].size() < graph[node_b].size()){
+    //   swap(graph[node_a], graph[node_b]);
+    // }
+    while(!graph[node_b].empty()){
+        graph[node_location[node_a]].push(graph[node_b].top());
+        graph[node_b].pop();
+    }
+    node_location[node_b] = node_location[node_a];
+  }
+bool is_self_edge(int node_a, int node_b){
+  return node_location[node_a] == node_location[node_b];
+}
+void setup_location_array(){
+  for(int i = 0; i < n_rows; i++){
+    node_location[i] = i;
+  }
+}
 void boruvka(){
   fprintf(stderr, "Boruvka \n");
+  setup_location_array();
+  while(true){
+    // print_edge(graph[0].top());
+    Edge node_to_merge = graph[0].top();
+
+    if(is_self_edge(0,node_to_merge.node_b)){
+      // fprintf(stderr, "self edge\n");
+      graph[0].pop();
+    }else{
+      merge(node_to_merge.node_a,node_to_merge.node_b);
+      total_weight = total_weight + node_to_merge.weight;
+    };
+    if(graph[0].empty()){
+      break;
+    }
+  }
+  fprintf(stderr, "Total weigth: %f\n", total_weight);
 }
 int
 main(int argc, char **argv)
@@ -139,13 +191,15 @@ main(int argc, char **argv)
   // dump_nonzeros(n_rows, values, col_ind, row_ptr_begin, row_ptr_end);
 
   fprintf(stderr, " \n %f \n", retrive_value(1,2));
-  struct Edge test = Edge(1,2,3);
-  fprintf(stderr, " testing %d %d %f \n", test.node_a, test.node_b, test.weight);
+
   create_structs();
-  show_lowest_edge();
+  // show_lowest_edge();
   // status_update();
   auto start_time = std::chrono::high_resolution_clock::now();
   boruvka();
+
+  // show_edges(1);
+ 
   auto end_time = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed_time = end_time - start_time;
   fprintf(stdout, "%.20f\n", elapsed_time.count());
