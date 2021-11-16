@@ -27,8 +27,8 @@ struct CompareWeight {
         return edge1.weight > edge2.weight;
     }
 };
-// const int max_n_elements = 214748364;
-const int max_n_elements = 131072;
+const int max_n_elements = 214748368;
+// const int max_n_elements = 131072;
 // const int max_n_rows = 16384;
 const int max_n_rows = 27993600;
 int nnz, n_rows, n_cols;
@@ -130,9 +130,9 @@ void create_structs(){
 void merge(int node_a, int node_b){
     fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
     //Dangerous optimazation!!!!!!!!!!!
-    // if(graph[node_a].size() > graph[node_b].size()){
-    //   swap(graph[node_a], graph[node_b]);
-    // }
+    if(graph[node_a].size() > graph[node_b].size()){
+      swap(graph[node_a], graph[node_b]);
+    }
     while(!graph[node_b].empty()){
         graph[node_location[node_a]].push(graph[node_b].top());
         graph[node_b].pop();
