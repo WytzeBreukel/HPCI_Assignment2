@@ -119,20 +119,18 @@ void get_neighbours(int node){
 }
 void create_structs(){
   for(int i = 0; i < n_rows; i++){
-    for(int k = 0; k < n_rows; k++){
-      double value = retrive_value(i,k);
-      if(value != 0 ){
-        graph[i].push(Edge(i,k,retrive_value(i,k)));
+    for(int idx = row_ptr_begin[i]; idx <= row_ptr_end[i]; idx++){
+        graph[i].push(Edge(i,col_ind[idx],values[idx]));
       }
     }
   }
-}
 void merge(int node_a, int node_b){
     fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
     //Dangerous optimazation!!!!!!!!!!!
-    if(graph[node_a].size() > graph[node_b].size()){
-      swap(graph[node_a], graph[node_b]);
-    }
+    // if(graph[node_a].size() < graph[node_b].size()){
+    //   fprintf(stderr, "SWAPP");
+    //   swap(graph[node_a], graph[node_b]);
+    // }
     while(!graph[node_b].empty()){
         graph[node_location[node_a]].push(graph[node_b].top());
         graph[node_b].pop();
@@ -150,22 +148,24 @@ void setup_location_array(){
 void boruvka(){
   fprintf(stderr, "Boruvka \n");
   setup_location_array();
-  while(true){
-    // print_edge(graph[0].top());
-    Edge node_to_merge = graph[0].top();
+  for(int i =0; i< n_rows; i++){
+    // fprintf(stderr, "Component %d \n",i);
+    while(!graph[i].empty()){
+      // print_edge(graph[0].top());
+      Edge node_to_merge = graph[i].top();
 
-    if(is_self_edge(0,node_to_merge.node_b)){
-      // fprintf(stderr, "self edge\n");
-      graph[0].pop();
-    }else{
-      merge(node_to_merge.node_a,node_to_merge.node_b);
-      total_weight = total_weight + node_to_merge.weight;
-    };
-    if(graph[0].empty()){
-      break;
+      if(is_self_edge(i,node_to_merge.node_b)){
+        // fprintf(stderr, "self edge\n");
+        graph[i].pop();
+      }else{
+        merge(node_to_merge.node_a,node_to_merge.node_b);
+        total_weight = total_weight + node_to_merge.weight;
+      };
+      
     }
-  }
-  fprintf(stderr, "Total weigth: %f\n", total_weight);
+    // fprintf(stderr, "Component %d done \n",i);
+    }
+    fprintf(stderr, "Total weigth: %f\n", total_weight);
 }
 int
 main(int argc, char **argv)
@@ -190,10 +190,8 @@ main(int argc, char **argv)
 
   /* For debugging, can be removed when implementation is finished. */
   // dump_nonzeros(n_rows, values, col_ind, row_ptr_begin, row_ptr_end);
-
-  fprintf(stderr, " \n %f \n", retrive_value(1,2));
-
   create_structs();
+  fprintf(stderr,"Matrix converted to structs \n");
   // show_lowest_edge();
   // status_update();
   auto start_time = std::chrono::high_resolution_clock::now();
