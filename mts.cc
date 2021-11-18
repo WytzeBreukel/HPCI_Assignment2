@@ -66,28 +66,37 @@ void print_edge(Edge edge){
   fprintf(stderr,"%d - %f - %d\n",edge.node_a, edge.weight, edge.node_b);
 }
 
-double retrive_value(int row, int column){
-   for(int idx = row_ptr_begin[row]; idx <= row_ptr_end[row]; idx++){
-    if(column == col_ind[idx]){
-      return values[idx];
-    }
-  }
-  return 0; 
-}
 
-void breath_first_search(int starting_node){
+// double retrive_value(int row, int column){
+//    for(int idx = row_ptr_begin[row]; idx <= row_ptr_end[row]; idx++){
+//     if(column == col_ind[idx]){
+//       return values[idx];
+//     }
+//   }
+//   return 0; 
+// }
+
+void divide_nodes(int starting_node, int amount_of_process){
+  int process_id = 0;
+  int amount_of_nodes_per_process = n_rows/amount_of_process;
+
+  int nodes_assigned = 0;
 
   visited_nodes[starting_node] = true;
   fprintf(stderr," %d",starting_node);
   to_visit.push(starting_node);
   while(!to_visit.empty()){
-    for(int j = row_ptr_begin[starting_node]; j<= row_ptr_end[starting_node]; j++){
-          if(!visited_nodes[col_ind[j]]){
-            fprintf(stderr," %d",col_ind[j]);
-            to_visit.push(col_ind[j]);
-            visited_nodes[col_ind[j]] = true;
+    for(int idx = row_ptr_begin[starting_node]; idx<= row_ptr_end[starting_node]; idx++){
+          if(!visited_nodes[col_ind[idx]]){
+            fprintf(stderr," %d",col_ind[idx]);
+            node_ownership[col_ind[idx]] = process_id;
+            nodes_assigned = nodes_assigned + 1;
+            if(nodes_assigned >= amount_of_nodes_per_process){
+              process_id = process_id + 1;
+            }
+            to_visit.push(col_ind[idx]);
+            visited_nodes[col_ind[idx]] = true;
           }
-      
     }
     // fprintf(stderr,"%d \n",starting_node);
     to_visit.pop();
@@ -114,19 +123,13 @@ void show_edges(int node){
   }
   throw;
 }
-void get_neighbours(int node){
- fprintf(stderr, "FOR %d \n",node);
-  for(int k = 0; k< n_rows;k++){
-    fprintf(stderr, "%d %f \n",k, retrive_value(node,k));
-  }
-}
-void create_structs(){
-  for(int i = 0; i < n_rows; i++){
-    for(int idx = row_ptr_begin[i]; idx <= row_ptr_end[i]; idx++){
-        graph[i].push(Edge(i,col_ind[idx],values[idx]));
-      }
-    }
-  }
+// void get_neighbours(int node){
+//  fprintf(stderr, "FOR %d \n",node);
+//   for(int k = 0; k< n_rows;k++){
+//     fprintf(stderr, "%d %f \n",k, retrive_value(node,k));
+//   }
+// }
+
 void merge(int node_a, int node_b){
     fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
     //Dangerous optimazation!!!!!!!!!!!
@@ -168,7 +171,19 @@ void boruvka(){
     }
     // fprintf(stderr, "Component %d done \n",i);
     }
-    fprintf(stderr, "Total weigth: %f\n", total_weight);
+    fprintf(stderr, "Total weigth: %f\n", total_weight); 
+}
+void create_structs(){
+  for(int i = 0; i < n_rows; i++){
+    for(int idx = row_ptr_begin[i]; idx <= row_ptr_end[i]; idx++){
+        graph[i].push(Edge(i,col_ind[idx],values[idx]));
+      }
+    }
+  }
+void show_node_assignment(){
+  for(int i = 0; i< n_rows; i++){
+    fprintf(stderr,"Node %d belongs to process %d",i,node_ownership[i]);
+  }
 }
 int
 main(int argc, char **argv)
@@ -198,8 +213,9 @@ main(int argc, char **argv)
   // show_lowest_edge();
   // status_update();
   auto start_time = std::chrono::high_resolution_clock::now();
-  // boruvka();
-  breath_first_search(0);
+  boruvka();
+  // divide_nodes(0,2);
+  // show_node_assignment();
 
   // show_edges(1);
  

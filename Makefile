@@ -2,7 +2,7 @@ CC = mpicc
 CXX = mpic++  
 # CC = gcc
 # CXX = g++  
-CFLAGS = -Wall -Wextra -Wno-unused-result -Wno-unused-parameter -Wno-unused-but-set-variable -O3 -g
+CFLAGS = -Wall -Wextra -Wno-unused-result -Wno-unused-parameter -Wno-unused-but-set-variable -O3 -g -mcmodel=medium
 CXXFLAGS = $(CFLAGS) -std=c++11
 
 all:	mts
