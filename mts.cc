@@ -29,6 +29,7 @@ struct CompareWeight {
 };
 const int max_n_elements = 214748368;
 // const int max_n_elements = 131072;
+// const int max_n_elements = 760648352;
 // const int max_n_rows = 16384;
 const int max_n_rows = 27993600;
 int nnz, n_rows, n_cols;
@@ -45,6 +46,8 @@ queue<int> to_visit;
 static bool visited_nodes[max_n_rows];
 
 static double total_weight = 0;
+
+static int node_ownership[max_n_rows];
 
 
 
@@ -75,21 +78,21 @@ double retrive_value(int row, int column){
 void breath_first_search(int starting_node){
 
   visited_nodes[starting_node] = true;
-
+  fprintf(stderr," %d",starting_node);
   to_visit.push(starting_node);
- 
   while(!to_visit.empty()){
-    for(int j = 0; j< n_rows; j++){
-      if (retrive_value(starting_node,j) != 0){
-          if(!visited_nodes[j]){
-            to_visit.push(j);
-            visited_nodes[j] = true;
+    for(int j = row_ptr_begin[starting_node]; j<= row_ptr_end[starting_node]; j++){
+          if(!visited_nodes[col_ind[j]]){
+            fprintf(stderr," %d",col_ind[j]);
+            to_visit.push(col_ind[j]);
+            visited_nodes[col_ind[j]] = true;
           }
-      }
+      
     }
-    fprintf(stderr,"%d \n",starting_node);
+    // fprintf(stderr,"%d \n",starting_node);
     to_visit.pop();
     starting_node = to_visit.front();
+    fprintf(stderr,"\n");
   }
 }
 
@@ -149,7 +152,7 @@ void boruvka(){
   fprintf(stderr, "Boruvka \n");
   setup_location_array();
   for(int i =0; i< n_rows; i++){
-    // fprintf(stderr, "Component %d \n",i);
+    fprintf(stderr, "Component %d \n",i);
     while(!graph[i].empty()){
       // print_edge(graph[0].top());
       Edge node_to_merge = graph[i].top();
@@ -195,7 +198,8 @@ main(int argc, char **argv)
   // show_lowest_edge();
   // status_update();
   auto start_time = std::chrono::high_resolution_clock::now();
-  boruvka();
+  // boruvka();
+  breath_first_search(0);
 
   // show_edges(1);
  
