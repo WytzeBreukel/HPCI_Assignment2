@@ -143,8 +143,16 @@ void show_node_assignment(){
     fprintf(stderr,"Node %d belongs to process %d \n",i,node_ownership[i]);
   }
 }
-void merge(int node_a, int node_b){
-    fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
+void merge(int node_a, int node_b,int weight){
+
+    
+
+  
+    if(graph[node_location[node_b]].empty()){
+      fprintf(stderr, "Link to empty! \n");
+      return;
+    }
+    // fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
     //Dangerous optimazation!!!!!!!!!!!
     // if(graph[node_a].size() < graph[node_b].size()){
     //   fprintf(stderr, "SWAPP");
@@ -158,7 +166,7 @@ void merge(int node_a, int node_b){
     node_location[node_location[node_b]] = node_location[node_a];
     node_location[node_b] = node_location[node_a];
     
-
+    total_weight = total_weight + weight;
     // if(node_a == 5 && node_b == 6){
     //   status_merging();
     //   show_edges(7);
@@ -200,8 +208,8 @@ void boruvka(int process_id){
         graph[i].pop();
       }else{
         graph[i].pop();
-        merge(edge_to_merge.node_a,edge_to_merge.node_b);
-        total_weight = total_weight + edge_to_merge.weight;
+        merge(edge_to_merge.node_a,edge_to_merge.node_b,edge_to_merge.weight);
+        
       };
       
     }
@@ -239,7 +247,7 @@ main(int argc, char **argv)
   auto start_time = std::chrono::high_resolution_clock::now();
   setup_location_array();
   divide_nodes(0,2);
-  show_node_assignment();
+  // show_node_assignment();
   boruvka(0);
   boruvka(1);
   // status_merging();
