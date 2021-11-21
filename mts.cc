@@ -83,12 +83,12 @@ void divide_nodes(int starting_node, int amount_of_process){
   int nodes_assigned = 0;
 
   visited_nodes[starting_node] = true;
-  fprintf(stderr," %d",starting_node);
+  // fprintf(stderr," %d",starting_node);
   to_visit.push(starting_node);
   while(!to_visit.empty()){
     for(int idx = row_ptr_begin[starting_node]; idx<= row_ptr_end[starting_node]; idx++){
           if(!visited_nodes[col_ind[idx]]){
-            fprintf(stderr," %d",col_ind[idx]);  
+            // fprintf(stderr," %d",col_ind[idx]);  
             to_visit.push(col_ind[idx]);
             visited_nodes[col_ind[idx]] = true;
 
@@ -104,7 +104,7 @@ void divide_nodes(int starting_node, int amount_of_process){
     // fprintf(stderr,"%d \n",starting_node);
     to_visit.pop();
     starting_node = to_visit.front();
-    fprintf(stderr,"\n");
+    // fprintf(stderr,"\n");
   }
 }
 
@@ -153,18 +153,30 @@ void merge_after_parrallel(int node_a, int node_b){
       
     }
   }
-void merge(int node_a, int node_b){
-    fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
+void merge(int node_a, int node_b, int weight){
+    // fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
     //Dangerous optimazation!!!!!!!!!!!
     // if(graph[node_a].size() < graph[node_b].size()){
     //   fprintf(stderr, "SWAPP");
     //   swap(graph[node_a], graph[node_b]);
     // }
-    while(!graph[node_b].empty()){
-        graph[node_location[node_a]].push(graph[node_b].top());
-        graph[node_b].pop();
+    // if(graph[node_b].empty()){
+    //   fprintf(stderr, "Empty!\n");
+    // }
+    int orginal_node_b = node_b;
+
+    node_b = node_location[node_b];
+
+    if(!graph[node_b].empty()){
+      while(!graph[node_b].empty()){
+          graph[node_location[node_a]].push(graph[node_b].top());
+          graph[node_b].pop();
+      }
+      total_weight = total_weight + weight;
     }
     node_location[node_b] = node_location[node_a];
+
+    node_location[orginal_node_b] = node_location[node_a];
   }
 bool is_self_edge(int node_a, int node_b){
   return node_location[node_a] == node_location[node_b];
@@ -186,7 +198,7 @@ void boruvka(int process_id){
   fprintf(stderr, "Boruvka for process %d\n",process_id);
 
   for(int i =0; i< n_rows; i++){
-    fprintf(stderr, "Component %d \n",i);
+    // fprintf(stderr, "Component %d \n",i);
     while(!graph[i].empty()){
   
       Edge edge_to_merge = graph[i].top();
@@ -200,7 +212,7 @@ void boruvka(int process_id){
       //second one might be unncecarry 
       //|| is_self_edge(edge_to_merge.node_b, i)
     
-      if(is_self_edge(i,edge_to_merge.node_b)  ){
+      if(is_self_edge(i,edge_to_merge.node_b)){
         // fprintf(stderr, "self edge\n");
         graph[i].pop();
       }else{
@@ -208,9 +220,9 @@ void boruvka(int process_id){
         //   throw;
         // }
         graph[i].pop();
-        merge(edge_to_merge.node_a,edge_to_merge.node_b);
-        total_weight = total_weight + edge_to_merge.weight;
-        status_merging();
+        merge(edge_to_merge.node_a,edge_to_merge.node_b , edge_to_merge.weight);
+        
+        // status_merging();
       };
       
     }
@@ -292,12 +304,14 @@ main(int argc, char **argv)
   auto start_time = std::chrono::high_resolution_clock::now();
   
   divide_nodes(0,2);
-  show_node_assignment();
+  // show_node_assignment();
   setup_location_array();
   boruvka(0);
   boruvka(1);
   // status_merging();
-  boruvka_merge(0);
+  // boruvka(-1);
+ 
+  // boruvka_merge(0);
   // show_edges(1);
  
   auto end_time = std::chrono::high_resolution_clock::now();
