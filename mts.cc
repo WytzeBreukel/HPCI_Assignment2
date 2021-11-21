@@ -150,11 +150,20 @@ void merge(int node_a, int node_b){
     //   fprintf(stderr, "SWAPP");
     //   swap(graph[node_a], graph[node_b]);
     // }
-    while(!graph[node_b].empty()){
-        graph[node_location[node_a]].push(graph[node_b].top());
-        graph[node_b].pop();
+    
+    while(!graph[node_location[node_b]].empty()){
+        graph[node_location[node_a]].push(graph[node_location[node_b]].top());
+        graph[node_location[node_b]].pop();
     }
+    node_location[node_location[node_b]] = node_location[node_a];
     node_location[node_b] = node_location[node_a];
+    
+
+    // if(node_a == 5 && node_b == 6){
+    //   status_merging();
+    //   show_edges(7);
+    //   throw;
+    // }
   }
 bool is_self_edge(int node_a, int node_b){
   return node_location[node_a] == node_location[node_b];
@@ -229,9 +238,14 @@ main(int argc, char **argv)
   // status_update();
   auto start_time = std::chrono::high_resolution_clock::now();
   setup_location_array();
+  divide_nodes(0,2);
+  show_node_assignment();
+  boruvka(0);
+  boruvka(1);
+  // status_merging();
   boruvka(-1);
 
-  // show_edges(1);
+
  
   auto end_time = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> elapsed_time = end_time - start_time;
