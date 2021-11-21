@@ -150,6 +150,8 @@ void merge(int node_a, int node_b,int weight){
   
     if(graph[node_location[node_b]].empty()){
       fprintf(stderr, "Link to empty! \n");
+      //CHECK THIS
+      node_location[node_b] = node_location[node_a];
       return;
     }
     // fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
