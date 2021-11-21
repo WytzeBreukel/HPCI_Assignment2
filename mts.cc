@@ -75,24 +75,35 @@ double retrive_value(int row, int column){
   return 0; 
 }
 
-void breath_first_search(int starting_node){
+void divide_nodes(int starting_node, int amount_of_process){
+  int process_id = 0;
+  int amount_of_nodes_per_process = n_rows/amount_of_process;
+
+  int nodes_assigned = 0;
 
   visited_nodes[starting_node] = true;
-  fprintf(stderr," %d",starting_node);
+  // fprintf(stderr," %d",starting_node);
   to_visit.push(starting_node);
   while(!to_visit.empty()){
-    for(int j = row_ptr_begin[starting_node]; j<= row_ptr_end[starting_node]; j++){
-          if(!visited_nodes[col_ind[j]]){
-            fprintf(stderr," %d",col_ind[j]);
-            to_visit.push(col_ind[j]);
-            visited_nodes[col_ind[j]] = true;
+    for(int idx = row_ptr_begin[starting_node]; idx<= row_ptr_end[starting_node]; idx++){
+          if(!visited_nodes[col_ind[idx]]){
+            // fprintf(stderr," %d",col_ind[idx]);  
+            to_visit.push(col_ind[idx]);
+            visited_nodes[col_ind[idx]] = true;
+
+
+            node_ownership[col_ind[idx]] = process_id;
+            nodes_assigned = nodes_assigned + 1;
+            if(nodes_assigned >= amount_of_nodes_per_process){
+              process_id = process_id + 1;
+              nodes_assigned = 0;
+            }
           }
-      
     }
     // fprintf(stderr,"%d \n",starting_node);
     to_visit.pop();
     starting_node = to_visit.front();
-    fprintf(stderr,"\n");
+    // fprintf(stderr,"\n");
   }
 }
 
@@ -127,6 +138,11 @@ void create_structs(){
       }
     }
   }
+void show_node_assignment(){
+  for(int i = 0; i< n_rows; i++){
+    fprintf(stderr,"Node %d belongs to process %d \n",i,node_ownership[i]);
+  }
+}
 void merge(int node_a, int node_b){
     fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
     //Dangerous optimazation!!!!!!!!!!!
@@ -143,26 +159,40 @@ void merge(int node_a, int node_b){
 bool is_self_edge(int node_a, int node_b){
   return node_location[node_a] == node_location[node_b];
 }
+bool is_outside_of_process(int process_id, int node){
+  // means merging process
+  if (process_id == -1){
+    return false;
+  }
+  return node_ownership[node] != process_id;
+}
 void setup_location_array(){
   for(int i = 0; i < n_rows; i++){
     node_location[i] = i;
   }
 }
-void boruvka(){
-  fprintf(stderr, "Boruvka \n");
-  setup_location_array();
+void boruvka(int process_id){
+  fprintf(stderr, "Boruvka for process %d\n",process_id);
+ 
   for(int i =0; i< n_rows; i++){
     fprintf(stderr, "Component %d \n",i);
     while(!graph[i].empty()){
       // print_edge(graph[0].top());
-      Edge node_to_merge = graph[i].top();
+      Edge edge_to_merge = graph[i].top();
 
-      if(is_self_edge(i,node_to_merge.node_b)){
+      if(is_outside_of_process(process_id, edge_to_merge.node_b) ||  is_outside_of_process(process_id, edge_to_merge.node_a)){
+        // print_edge(edge_to_merge);
+        // fprintf(stderr, "Is outside of process\n");
+        break;
+      }
+
+      if(is_self_edge(i,edge_to_merge.node_b)){
         // fprintf(stderr, "self edge\n");
         graph[i].pop();
       }else{
-        merge(node_to_merge.node_a,node_to_merge.node_b);
-        total_weight = total_weight + node_to_merge.weight;
+        graph[i].pop();
+        merge(edge_to_merge.node_a,edge_to_merge.node_b);
+        total_weight = total_weight + edge_to_merge.weight;
       };
       
     }
@@ -198,8 +228,7 @@ main(int argc, char **argv)
   // show_lowest_edge();
   // status_update();
   auto start_time = std::chrono::high_resolution_clock::now();
-  // boruvka();
-  breath_first_search(0);
+  boruvka(-1);
 
   // show_edges(1);
  
