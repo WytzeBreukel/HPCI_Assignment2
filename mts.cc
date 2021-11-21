@@ -228,6 +228,7 @@ main(int argc, char **argv)
   // show_lowest_edge();
   // status_update();
   auto start_time = std::chrono::high_resolution_clock::now();
+  setup_location_array();
   boruvka(-1);
 
   // show_edges(1);
