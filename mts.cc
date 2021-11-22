@@ -162,8 +162,11 @@ void merge(int node_a, int node_b,int weight){
     // }
     
     while(!graph[node_location[node_b]].empty()){
+        fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
+        fprintf(stderr,"node_a %d node_B %d location_node_a %d location_node_b %d \n", node_a, node_b, node_location[node_a], node_location[node_b]);
         graph[node_location[node_a]].push(graph[node_location[node_b]].top());
         graph[node_location[node_b]].pop();
+        fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
     }
     node_location[node_location[node_b]] = node_location[node_a];
     node_location[node_b] = node_location[node_a];
@@ -205,7 +208,7 @@ void boruvka(int process_id){
         break;
       }
 
-      if(is_self_edge(i,edge_to_merge.node_b)){
+      if(is_self_edge(edge_to_merge.node_a,edge_to_merge.node_b)){
         // fprintf(stderr, "self edge\n");
         graph[i].pop();
       }else{
