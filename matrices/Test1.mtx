@@ -1,0 +1,19 @@
+%%MatrixMarket matrix coordinate real general 
+%-------------------------------------------------------------------------------
+% UF Sparse Matrix Collection, Tim Davis
+% http://www.cise.ufl.edu/research/sparse/matrices/HB/mcfe
+% name: HB/mcfe
+% [U NON-LTE PROBLEM ASTROPHYSICS.CODE:M.CARLSSON, ATOM='FE  ATMOS=M65GXM.]
+% id: 213
+% date: 1985
+% author: M. Carlsson
+% ed: I. Duff, R. Grimes, J. Lewis
+% fields: title A name id date author ed kind
+% kind: 2D/3D problem
+%-------------------------------------------------------------------------------
+6 6 5
+1 2 7
+2 3 5
+3 4 1
+4 5 11
+5 6 3
