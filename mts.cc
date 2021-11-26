@@ -231,6 +231,20 @@ main(int argc, char **argv)
       return -1;
     }
 
+int   numtasks, taskid, len;
+char hostname[MPI_MAX_PROCESSOR_NAME];
+
+MPI_Init(&argc, &argv);
+MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
+MPI_Get_processor_name(hostname, &len);
+printf ("Hello from task %d on %s!\n", taskid, hostname);
+if (taskid == 0)
+   printf("MASTER: Number of MPI tasks is: %d\n",numtasks);
+
+
+  
+
   
   bool ok(false);
 
@@ -251,22 +265,28 @@ main(int argc, char **argv)
   // status_update();
 
   auto start_time = std::chrono::high_resolution_clock::now();
+  
   setup_location_array();
   // show_edges(5);
-  divide_nodes(0,2);
+  divide_nodes(0,numtasks);
   // show_node_assignment();
-  boruvka(0);
-  boruvka(1);
-  
-  status_merging();
-  
-  boruvka(-1);
+  boruvka(taskid);
+  int number;
+  if(taskid != 0){
+    number = 42;
+    MPI_Send(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+  }
 
+  if(taskid == 0){
+    MPI_Recv(&number, 1, MPI_INT, 1, 0, MPI_COMM_WORLD,
+             MPI_STATUS_IGNORE);
+    printf("Process 1 received number %d from process 0\n",
+           number);
 
- 
-  auto end_time = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> elapsed_time = end_time - start_time;
-  fprintf(stdout, "%.20f\n", elapsed_time.count());
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time = end_time - start_time;
+    fprintf(stdout, "%.20f\n", elapsed_time.count());
+  }
 
   return 0;
 }
