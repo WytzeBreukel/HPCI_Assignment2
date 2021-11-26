@@ -148,6 +148,14 @@ void show_node_assignment(){
     fprintf(stderr,"Node %d belongs to process %d \n",i,node_ownership[i]);
   }
 }
+void update_mst(Edge edge){
+    trees[node_location[edge.node_a]].insert(trees[node_location[edge.node_a]].end(), trees[node_location[edge.node_b]].begin(), trees[node_location[edge.node_b]].end());
+    
+    trees[node_location[edge.node_b]].clear();
+
+    trees[node_location[edge.node_a]].push_back(edge);
+
+}
 void merge(Edge edge){
 
     if(graph[node_location[edge.node_b]].empty()){
@@ -156,7 +164,7 @@ void merge(Edge edge){
       node_location[edge.node_b] = node_location[edge.node_a];
       return;
     }
-    fprintf(stderr, "In MST %d - %d \n",edge.node_a, edge.node_b);
+    // fprintf(stderr, "In MST %d - %d \n",edge.node_a, edge.node_b);
     //Dangerous optimazation!!!!!!!!!!!
     // if(graph[node_a].size() < graph[node_b].size()){
     //   fprintf(stderr, "SWAPP");
@@ -170,10 +178,12 @@ void merge(Edge edge){
         graph[node_location[edge.node_b]].pop();
         // fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
     }
+
+    update_mst(edge);
     node_location[node_location[edge.node_b]] = node_location[edge.node_a];
     node_location[edge.node_b] = node_location[edge.node_a];
-    
-    trees[node_location[edge.node_a]].push_back(edge);
+
+   
     // if(node_a == 5 && node_b == 6){
     //   status_merging();
     //   show_edges(7);
@@ -230,18 +240,26 @@ void report_results(){
   for(int i = 0; i< n_rows; i++){
     if(!trees[i].empty()){
       double weight = 0;
-      fprintf(stderr, "Edges for Tree %d\n",i);
+      fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
       for(int k = 0; k < int(trees[i].size()); k++){
         Edge edge = trees[i][k];
         print_edge(edge);
         weight += edge.weight;
       }
-      fprintf(stderr, "Weight for tree %d: %f\n",i ,weight);
+      fprintf(stderr, "Weight for tree %d: %f\n",number_of_trees ,weight);
       number_of_trees +=1;
       total_weight += weight;
     }
   }
   fprintf(stderr, "Weight for all trees %f\n",total_weight);
+}
+template<typename T>
+void printVectorElements(vector<T> &vec)
+{
+    for (auto i = 0; i < vec.size(); ++i) {
+        print_edge(vec.at(i));
+    }
+    printf("\n");
 }
 int
 main(int argc, char **argv)
@@ -264,9 +282,19 @@ main(int argc, char **argv)
     printf("MASTER: Number of MPI tasks is: %d\n",numtasks);
     }
 
+  // vector<Edge> i_vec1;
+  // vector<Edge> i_vec2;
 
-  
+  // i_vec1.push_back(Edge(1,1,1));
+  // i_vec2.push_back(Edge(2,2,2));
 
+  // printVectorElements(i_vec1);
+  // i_vec1.insert(i_vec1.end(), i_vec2.begin(), i_vec2.end());
+  // printVectorElements(i_vec1);
+  // i_vec2.clear();
+  // printVectorElements(i_vec2);
+
+  // throw;
   
   bool ok(false);
 
