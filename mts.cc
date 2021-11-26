@@ -2,6 +2,7 @@
 #include <tuple>
 #include <cstdio>
 #include <queue>
+#include <vector>
 #include "matrix.h"
 #include "mpi.h"
 using namespace std;
@@ -42,12 +43,16 @@ static int row_ptr_end[max_n_rows];
 
 static priority_queue<Edge, vector<Edge>, CompareWeight> graph[max_n_rows];
 
+static vector <Edge> trees[max_n_rows];
+
 queue<int> to_visit;
 static bool visited_nodes[max_n_rows];
 
 static double total_weight = 0;
 
 static int node_ownership[max_n_rows];
+
+
 
 
 
@@ -143,35 +148,32 @@ void show_node_assignment(){
     fprintf(stderr,"Node %d belongs to process %d \n",i,node_ownership[i]);
   }
 }
-void merge(int node_a, int node_b,double weight){
+void merge(Edge edge){
 
-    
-
-  
-    if(graph[node_location[node_b]].empty()){
+    if(graph[node_location[edge.node_b]].empty()){
       // fprintf(stderr, "Link to empty! \n");
       //CHECK THIS
-      node_location[node_b] = node_location[node_a];
+      node_location[edge.node_b] = node_location[edge.node_a];
       return;
     }
-    fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
+    fprintf(stderr, "In MST %d - %d \n",edge.node_a, edge.node_b);
     //Dangerous optimazation!!!!!!!!!!!
     // if(graph[node_a].size() < graph[node_b].size()){
     //   fprintf(stderr, "SWAPP");
     //   swap(graph[node_a], graph[node_b]);
     // }
     
-    while(!graph[node_location[node_b]].empty()){
+    while(!graph[node_location[edge.node_b]].empty()){
         // fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
         // fprintf(stderr,"node_a %d node_B %d location_node_a %d location_node_b %d \n", node_a, node_b, node_location[node_a], node_location[node_b]);
-        graph[node_location[node_a]].push(graph[node_location[node_b]].top());
-        graph[node_location[node_b]].pop();
+        graph[node_location[edge.node_a]].push(graph[node_location[edge.node_b]].top());
+        graph[node_location[edge.node_b]].pop();
         // fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
     }
-    node_location[node_location[node_b]] = node_location[node_a];
-    node_location[node_b] = node_location[node_a];
+    node_location[node_location[edge.node_b]] = node_location[edge.node_a];
+    node_location[edge.node_b] = node_location[edge.node_a];
     
-    total_weight = total_weight + weight;
+    trees[node_location[edge.node_a]].push_back(edge);
     // if(node_a == 5 && node_b == 6){
     //   status_merging();
     //   show_edges(7);
@@ -213,7 +215,7 @@ void boruvka(int process_id){
         graph[i].pop();
       }else{
         graph[i].pop();
-        merge(edge_to_merge.node_a,edge_to_merge.node_b,edge_to_merge.weight);
+        merge(edge_to_merge);
         
       };
       
@@ -221,6 +223,25 @@ void boruvka(int process_id){
     // fprintf(stderr, "Component %d done \n",i);
     }
     fprintf(stderr, "Total weigth: %f\n", total_weight);
+}
+void report_results(){
+  int number_of_trees = 0;
+  double total_weight = 0;
+  for(int i = 0; i< n_rows; i++){
+    if(!trees[i].empty()){
+      double weight = 0;
+      fprintf(stderr, "Edges for Tree %d\n",i);
+      for(int k = 0; k < int(trees[i].size()); k++){
+        Edge edge = trees[i][k];
+        print_edge(edge);
+        weight += edge.weight;
+      }
+      fprintf(stderr, "Weight for tree %d: %f\n",i ,weight);
+      number_of_trees +=1;
+      total_weight += weight;
+    }
+  }
+  fprintf(stderr, "Weight for all trees %f\n",total_weight);
 }
 int
 main(int argc, char **argv)
@@ -231,16 +252,17 @@ main(int argc, char **argv)
       return -1;
     }
 
-int   numtasks, taskid, len;
-char hostname[MPI_MAX_PROCESSOR_NAME];
+  int   numtasks, taskid, len;
+  char hostname[MPI_MAX_PROCESSOR_NAME];
 
-MPI_Init(&argc, &argv);
-MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
-MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
-MPI_Get_processor_name(hostname, &len);
-printf ("Hello from task %d on %s!\n", taskid, hostname);
-if (taskid == 0)
-   printf("MASTER: Number of MPI tasks is: %d\n",numtasks);
+  MPI_Init(&argc, &argv);
+  MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+  MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
+  MPI_Get_processor_name(hostname, &len);
+  printf ("Hello from task %d on %s!\n", taskid, hostname);
+  if (taskid == 0){
+    printf("MASTER: Number of MPI tasks is: %d\n",numtasks);
+    }
 
 
   
@@ -271,17 +293,18 @@ if (taskid == 0)
   divide_nodes(0,numtasks);
   // show_node_assignment();
   boruvka(taskid);
-  int number;
+  // int number;
   if(taskid != 0){
-    number = 42;
-    MPI_Send(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    // number = 42;
+    // MPI_Send(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   }
 
   if(taskid == 0){
-    MPI_Recv(&number, 1, MPI_INT, 1, 0, MPI_COMM_WORLD,
-             MPI_STATUS_IGNORE);
-    printf("Process 1 received number %d from process 0\n",
-           number);
+    report_results();
+    // MPI_Recv(&number, 1, MPI_INT, 1, 0, MPI_COMM_WORLD,
+    //          MPI_STATUS_IGNORE);
+    // printf("Process 1 received number %d from process 0\n",
+    //        number);
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
