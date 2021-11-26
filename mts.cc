@@ -51,17 +51,15 @@ static int node_ownership[max_n_rows];
 
 
 
-// void status_update(){
+void status_update(){
 
-//   for(int i =0; i < n_rows; i++){
-//      fprintf(stderr, "index %d start %d end %d \n", i, row_ptr_begin[i] , row_ptr_end[i]);
-//      for(int k = row_ptr_begin[i]; k <= row_ptr_end[i]; k++){
-//        fprintf(stderr, " collum %d value %d orignal row %d \n",  col_ind[k], get<0>(values[k]), get<1>(values[k]));
-//      }
-//   }
-
-//   fprintf(stderr, "last status %d \n", last_row_ptr_index);
-// }
+  for(int i =0; i < n_rows; i++){
+     fprintf(stderr, "index %d start %d end %d \n", i, row_ptr_begin[i] , row_ptr_end[i]);
+     for(int k = row_ptr_begin[i]; k <= row_ptr_end[i]; k++){
+       fprintf(stderr, " collum %d value %f \n",  col_ind[k], values[k]);
+     }
+  }
+}
 void print_edge(Edge edge){
   fprintf(stderr,"%d - %f - %d\n",edge.node_a, edge.weight, edge.node_b);
 }
@@ -134,7 +132,9 @@ void get_neighbours(int node){
 void create_structs(){
   for(int i = 0; i < n_rows; i++){
     for(int idx = row_ptr_begin[i]; idx <= row_ptr_end[i]; idx++){
+    
         graph[i].push(Edge(i,col_ind[idx],values[idx]));
+        graph[col_ind[idx]].push(Edge(col_ind[idx], i, values[idx]));
       }
     }
   }
@@ -143,18 +143,18 @@ void show_node_assignment(){
     fprintf(stderr,"Node %d belongs to process %d \n",i,node_ownership[i]);
   }
 }
-void merge(int node_a, int node_b,int weight){
+void merge(int node_a, int node_b,double weight){
 
     
 
   
     if(graph[node_location[node_b]].empty()){
-      fprintf(stderr, "Link to empty! \n");
+      // fprintf(stderr, "Link to empty! \n");
       //CHECK THIS
       node_location[node_b] = node_location[node_a];
       return;
     }
-    // fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
+    fprintf(stderr, "In MST %d - %d \n",node_a, node_b);
     //Dangerous optimazation!!!!!!!!!!!
     // if(graph[node_a].size() < graph[node_b].size()){
     //   fprintf(stderr, "SWAPP");
@@ -162,11 +162,11 @@ void merge(int node_a, int node_b,int weight){
     // }
     
     while(!graph[node_location[node_b]].empty()){
-        fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
-        fprintf(stderr,"node_a %d node_B %d location_node_a %d location_node_b %d \n", node_a, node_b, node_location[node_a], node_location[node_b]);
+        // fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
+        // fprintf(stderr,"node_a %d node_B %d location_node_a %d location_node_b %d \n", node_a, node_b, node_location[node_a], node_location[node_b]);
         graph[node_location[node_a]].push(graph[node_location[node_b]].top());
         graph[node_location[node_b]].pop();
-        fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
+        // fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
     }
     node_location[node_location[node_b]] = node_location[node_a];
     node_location[node_b] = node_location[node_a];
@@ -197,7 +197,7 @@ void boruvka(int process_id){
   fprintf(stderr, "Boruvka for process %d\n",process_id);
  
   for(int i =0; i< n_rows; i++){
-    fprintf(stderr, "Component %d \n",i);
+    // fprintf(stderr, "Component %d \n",i);
     while(!graph[i].empty()){
       // print_edge(graph[0].top());
       Edge edge_to_merge = graph[i].top();
@@ -249,13 +249,17 @@ main(int argc, char **argv)
   fprintf(stderr,"Matrix converted to structs \n");
   // show_lowest_edge();
   // status_update();
+
   auto start_time = std::chrono::high_resolution_clock::now();
   setup_location_array();
+  // show_edges(5);
   divide_nodes(0,2);
   // show_node_assignment();
   boruvka(0);
   boruvka(1);
-  // status_merging();
+  
+  status_merging();
+  
   boruvka(-1);
 
 
