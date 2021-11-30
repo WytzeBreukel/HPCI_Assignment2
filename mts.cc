@@ -234,7 +234,7 @@ void boruvka(int process_id){
     }
     fprintf(stderr, "Total weigth: %f\n", total_weight);
 }
-void report_results(){
+void report_results(int nodes_with_no_edges){
   int number_of_trees = 0;
   double total_weight = 0;
   for(int i = 0; i< n_rows; i++){
@@ -251,16 +251,23 @@ void report_results(){
       total_weight += weight;
     }
   }
+  fprintf(stderr, "There are %d trees with no edges making then total amount of trees: %d\n", nodes_with_no_edges, number_of_trees+nodes_with_no_edges);
   fprintf(stderr, "Weight for all trees %f\n",total_weight);
 }
-template<typename T>
-void printVectorElements(vector<T> &vec)
-{
-    for (auto i = 0; i < vec.size(); ++i) {
-        print_edge(vec.at(i));
+
+int find_nodes_with_no_edges(){
+  int nodes_with_no_edges = 0;
+  for(int i = 0; i < n_rows; i++){
+    if(graph[i].empty()){
+      printf("EMPTY!");
+      nodes_with_no_edges +=1;
     }
-    printf("\n");
+  }
+  printf("No edge %d\n", nodes_with_no_edges);
+  return nodes_with_no_edges;
 }
+
+
 int
 main(int argc, char **argv)
 {
@@ -313,7 +320,12 @@ main(int argc, char **argv)
   fprintf(stderr,"Matrix converted to structs \n");
   // show_lowest_edge();
   // status_update();
-
+  int nodes_with_no_edges;
+  if(taskid == 0){
+    nodes_with_no_edges = find_nodes_with_no_edges();
+  }
+  printf("No edge %d\n", nodes_with_no_edges);
+  throw;
   auto start_time = std::chrono::high_resolution_clock::now();
   
   setup_location_array();
@@ -328,7 +340,7 @@ main(int argc, char **argv)
   }
 
   if(taskid == 0){
-    report_results();
+    report_results(nodes_with_no_edges);
     // MPI_Recv(&number, 1, MPI_INT, 1, 0, MPI_COMM_WORLD,
     //          MPI_STATUS_IGNORE);
     // printf("Process 1 received number %d from process 0\n",
