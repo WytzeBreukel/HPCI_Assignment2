@@ -32,7 +32,7 @@ const int max_n_elements = 214748368;
 // const int max_n_elements = 131072;
 // const int max_n_elements = 760648352;
 // const int max_n_rows = 16384;
-const int max_n_rows = 27993600;
+const int max_n_rows = 45101;
 int nnz, n_rows, n_cols;
 static double values[max_n_elements];
 
@@ -48,7 +48,7 @@ static vector <Edge> trees[max_n_rows];
 queue<int> to_visit;
 static bool visited_nodes[max_n_rows];
 
-static double total_weight = 0;
+// static double total_weight = 0;
 
 static int node_ownership[max_n_rows];
 
@@ -232,7 +232,7 @@ void boruvka(int process_id){
     }
     // fprintf(stderr, "Component %d done \n",i);
     }
-    fprintf(stderr, "Total weigth: %f\n", total_weight);
+    // fprintf(stderr, "Total weigth: %f\n", total_weight); 
 }
 void report_results(int nodes_with_no_edges){
   int number_of_trees = 0;
@@ -267,6 +267,18 @@ int find_nodes_with_no_edges(){
   return nodes_with_no_edges;
 }
 
+void merge_location_arrays(int received_location_array[]){
+  for(int i = 0; i < n_rows; i++){
+    if(received_location_array[i] != i){
+      //sanity check 
+      if(node_location[i] != i){
+        printf("THIS SHOULD NOT HAPPEN\n");
+        throw;
+      }
+      node_location[i] = received_location_array[i];
+    }
+  }
+}
 
 int
 main(int argc, char **argv)
@@ -320,31 +332,39 @@ main(int argc, char **argv)
   fprintf(stderr,"Matrix converted to structs \n");
   // show_lowest_edge();
   // status_update();
-  int nodes_with_no_edges;
+  int nodes_with_no_edges = 0;
   if(taskid == 0){
     nodes_with_no_edges = find_nodes_with_no_edges();
   }
-  printf("No edge %d\n", nodes_with_no_edges);
-  throw;
   auto start_time = std::chrono::high_resolution_clock::now();
   
   setup_location_array();
   // show_edges(5);
+  if(numtasks == 1){
+    boruvka(-1);
+    report_results(nodes_with_no_edges);
+    return;
+  }
   divide_nodes(0,numtasks);
   // show_node_assignment();
   boruvka(taskid);
-  // int number;
   if(taskid != 0){
-    // number = 42;
-    // MPI_Send(&number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    // int test_array[3];
+    // test_array[2] = 999;
+    for(int i= 0; i< n_rows; i++){
+      printf("Location pre send %d \n", node_location[i]);
+    }
+    MPI_Send(&node_location, n_rows, MPI_INT, 0, 0, MPI_COMM_WORLD);
   }
 
   if(taskid == 0){
-    report_results(nodes_with_no_edges);
-    // MPI_Recv(&number, 1, MPI_INT, 1, 0, MPI_COMM_WORLD,
-    //          MPI_STATUS_IGNORE);
-    // printf("Process 1 received number %d from process 0\n",
-    //        number);
+    
+    int received_location_array[max_n_rows];
+    MPI_Recv (&received_location_array,n_rows,MPI_INT,1,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+    
+    merge_location_arrays(received_location_array);
+    
+    status_merging();
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
