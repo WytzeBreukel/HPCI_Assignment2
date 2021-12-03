@@ -32,7 +32,8 @@ const int max_n_elements = 214748368;
 // const int max_n_elements = 131072;
 // const int max_n_elements = 760648352;
 // const int max_n_rows = 16384;
-const int max_n_rows = 45101;
+// const int max_n_rows =  27993600;
+const int max_n_rows =  	952203;
 int nnz, n_rows, n_cols;
 static double values[max_n_elements];
 
@@ -266,7 +267,27 @@ int find_nodes_with_no_edges(){
   printf("No edge %d\n", nodes_with_no_edges);
   return nodes_with_no_edges;
 }
+void send_edges(int task_id){
+  vector<int> ids;
+  vector<int> sizes;
+  for(int i =0; i< n_rows; i++){
+    if(node_location[i] == task_id){
+      ids.push_back(i);
+      sizes.push_back(graph[i].size());
+    }
+  }
+  int amount_of_components = ids.size();
+  MPI_Send(&amount_of_components, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+  
+}
 
+void recieve_edges(int task_id){
+  printf("Recieveing components from %d\n", task_id);
+  int amount_of_components;
+  MPI_Recv(&amount_of_components,   1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  printf("amount of components %d\n",amount_of_components);
+}
 void merge_location_arrays(int received_location_array[]){
   for(int i = 0; i < n_rows; i++){
     if(received_location_array[i] != i){
@@ -288,12 +309,23 @@ main(int argc, char **argv)
       fprintf(stderr, "usage: %s <filename>\n", argv[0]);
       return -1;
     }
-
   int   numtasks, taskid, len;
   char hostname[MPI_MAX_PROCESSOR_NAME];
 
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+  const int nitems=3;
+  int          blocklengths[3] = {1,1,1};
+  MPI_Datatype types[3] = {MPI_INT, MPI_INT,MPI_DOUBLE};
+  MPI_Datatype mpi_edge_type;
+  MPI_Aint     offsets[3];
+
+  offsets[0] = offsetof(Edge, node_a);
+  offsets[1] = offsetof(Edge, node_b);
+  offsets[2] = offsetof(Edge, weight);
+
+  MPI_Type_create_struct(nitems, blocklengths, offsets, types, &mpi_edge_type);
+  MPI_Type_commit(&mpi_edge_type);
   MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
   MPI_Get_processor_name(hostname, &len);
   printf ("Hello from task %d on %s!\n", taskid, hostname);
@@ -301,19 +333,6 @@ main(int argc, char **argv)
     printf("MASTER: Number of MPI tasks is: %d\n",numtasks);
     }
 
-  // vector<Edge> i_vec1;
-  // vector<Edge> i_vec2;
-
-  // i_vec1.push_back(Edge(1,1,1));
-  // i_vec2.push_back(Edge(2,2,2));
-
-  // printVectorElements(i_vec1);
-  // i_vec1.insert(i_vec1.end(), i_vec2.begin(), i_vec2.end());
-  // printVectorElements(i_vec1);
-  // i_vec2.clear();
-  // printVectorElements(i_vec2);
-
-  // throw;
   
   bool ok(false);
 
@@ -339,32 +358,41 @@ main(int argc, char **argv)
   auto start_time = std::chrono::high_resolution_clock::now();
   
   setup_location_array();
-  // show_edges(5);
   if(numtasks == 1){
     boruvka(-1);
     report_results(nodes_with_no_edges);
-    return;
+    return 0;
   }
   divide_nodes(0,numtasks);
-  // show_node_assignment();
+  show_node_assignment();
   boruvka(taskid);
   if(taskid != 0){
     // int test_array[3];
     // test_array[2] = 999;
-    for(int i= 0; i< n_rows; i++){
+    for(int i= 0; i < n_rows; i++){
       printf("Location pre send %d \n", node_location[i]);
     }
+   
     MPI_Send(&node_location, n_rows, MPI_INT, 0, 0, MPI_COMM_WORLD);
+
+    send_edges(taskid);
+    
   }
 
   if(taskid == 0){
     
     int received_location_array[max_n_rows];
     MPI_Recv (&received_location_array,n_rows,MPI_INT,1,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-    
+
+
+    // MPI_Recv(&recv,   1, mpi_edge_type, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    // printf(" Received: nodea = %d nodeb = %d , weight = %f\n",recv.node_a, recv.node_b, recv.weight);
     merge_location_arrays(received_location_array);
     
     status_merging();
+    for(int i= 1; i< numtasks; i++){
+      recieve_edges(i);
+    }
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
