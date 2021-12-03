@@ -271,14 +271,16 @@ void send_edges(int task_id){
   vector<int> ids;
   vector<int> sizes;
   for(int i =0; i< n_rows; i++){
-    if(node_location[i] == task_id){
+    if(node_ownership[i] == task_id){
       ids.push_back(i);
       sizes.push_back(graph[i].size());
     }
   }
   int amount_of_components = ids.size();
+  status_merging();
+  printf("AMOUNT OF compents before sending %d \n",amount_of_components);
   MPI_Send(&amount_of_components, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-  
+
 }
 
 void recieve_edges(int task_id){
@@ -389,7 +391,7 @@ main(int argc, char **argv)
     // printf(" Received: nodea = %d nodeb = %d , weight = %f\n",recv.node_a, recv.node_b, recv.weight);
     merge_location_arrays(received_location_array);
     
-    status_merging();
+    // status_merging();
     for(int i= 1; i< numtasks; i++){
       recieve_edges(i);
     }
