@@ -16,7 +16,7 @@ struct Edge {
     int node_b;
  
     double weight;
-    Edge(int node_a, int node_b, double weight)
+    Edge(int node_a = 0, int node_b = 0, double weight =0.0)
         : node_a(node_a), node_b(node_b), weight(weight)
          {
     }
@@ -52,7 +52,7 @@ static bool visited_nodes[max_n_rows];
 // static double total_weight = 0;
 
 static int node_ownership[max_n_rows];
-
+MPI_Datatype mpi_edge_type;
 
 
 
@@ -276,19 +276,63 @@ void send_edges(int task_id){
       sizes.push_back(graph[i].size());
     }
   }
+  for(int i =0; i< ids.size(); i++){
+    printf("ID %d size %d \n", ids[i],sizes[i]);
+  }
+  // throw;
   int amount_of_components = ids.size();
-  status_merging();
+
   printf("AMOUNT OF compents before sending %d \n",amount_of_components);
   MPI_Send(&amount_of_components, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+  for(int i = 0; i<amount_of_components; i++){
+    int information[2] = {ids[i], sizes[i]};
+    printf("ID %d size %d \n", ids[i],sizes[i]);
+    MPI_Send(&information, 2, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    if(sizes[i] != 0){
+        vector<Edge> edges;
+        while(!graph[information[0]].empty()){
+          edges.push_back(graph[information[0]].top());
+          graph[information[0]].pop();
+        }
+        printf("Size %d\n",sizes[i]);
+
+        for(int k = 0; k< sizes[i]; k++){
+        printf("TEST vector pre send %d %d %f\n",edges[k].node_a,edges[k].node_b,edges[k].weight);
+      }
+        // throw;
+        MPI_Send(&edges[0],sizes[i], mpi_edge_type,0, 0, MPI_COMM_WORLD);
+       
+    }
+    
+  }
 
 }
 
 void recieve_edges(int task_id){
   printf("Recieveing components from %d\n", task_id);
   int amount_of_components;
-  MPI_Recv(&amount_of_components,   1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Recv(&amount_of_components, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   printf("amount of components %d\n",amount_of_components);
+  for(int i = 0; i<amount_of_components; i++){
+    int information[2];
+    MPI_Recv(&information, 2, MPI_INT, 1, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+  
+    printf("INFO %d %d \n", information[0],information[1]);
+
+    if(information[1] == 0 ){
+      graph[information[0]] = priority_queue<Edge, vector<Edge>, CompareWeight>();
+    }else{
+      vector<Edge> edges;
+      edges.resize(information[1]);
+
+      MPI_Recv(&edges[0], information[1], mpi_edge_type, 1, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+      for(int i = 0; i< information[1]; i++){
+        printf("TEST vector post send %d %d %f\n",edges[i].node_a,edges[i].node_b,edges[i].weight);
+      }
+    }
+    
+  }
 }
 void merge_location_arrays(int received_location_array[]){
   for(int i = 0; i < n_rows; i++){
@@ -316,10 +360,11 @@ main(int argc, char **argv)
 
   MPI_Init(&argc, &argv);
   MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+
   const int nitems=3;
   int          blocklengths[3] = {1,1,1};
   MPI_Datatype types[3] = {MPI_INT, MPI_INT,MPI_DOUBLE};
-  MPI_Datatype mpi_edge_type;
+ 
   MPI_Aint     offsets[3];
 
   offsets[0] = offsetof(Edge, node_a);
@@ -366,7 +411,7 @@ main(int argc, char **argv)
     return 0;
   }
   divide_nodes(0,numtasks);
-  show_node_assignment();
+  // show_node_assignment();
   boruvka(taskid);
   if(taskid != 0){
     // int test_array[3];
