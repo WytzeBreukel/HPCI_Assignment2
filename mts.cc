@@ -69,6 +69,15 @@ void status_update(){
 void print_edge(Edge edge){
   fprintf(stderr,"%d - %f - %d\n",edge.node_a, edge.weight, edge.node_b);
 }
+void snapshot(){
+  for(int i = 0; i < n_rows; i++){
+    fprintf(stderr,"ID = %d size = %d \n",i,int(graph[i].size()));
+    if(graph[i].size() != 0){
+      print_edge(graph[i].top());
+    }
+    fprintf(stderr, "\n");
+  }
+}
 
 double retrive_value(int row, int column){
    for(int idx = row_ptr_begin[row]; idx <= row_ptr_end[row]; idx++){
@@ -276,7 +285,7 @@ void send_edges(int task_id){
       sizes.push_back(graph[i].size());
     }
   }
-  for(int i =0; i< ids.size(); i++){
+  for(int i =0; i< int(ids.size()); i++){
     printf("ID %d size %d \n", ids[i],sizes[i]);
   }
   // throw;
@@ -296,10 +305,9 @@ void send_edges(int task_id){
         }
         printf("Size %d\n",sizes[i]);
 
-        for(int k = 0; k< sizes[i]; k++){
-        printf("TEST vector pre send %d %d %f\n",edges[k].node_a,edges[k].node_b,edges[k].weight);
-      }
-        // throw;
+      //   for(int k = 0; k< sizes[i]; k++){
+      //   printf("TEST vector pre send %d %d %f\n",edges[k].node_a,edges[k].node_b,edges[k].weight);
+      // }
         MPI_Send(&edges[0],sizes[i], mpi_edge_type,0, 0, MPI_COMM_WORLD);
        
     }
@@ -327,9 +335,15 @@ void recieve_edges(int task_id){
       edges.resize(information[1]);
 
       MPI_Recv(&edges[0], information[1], mpi_edge_type, 1, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-      for(int i = 0; i< information[1]; i++){
-        printf("TEST vector post send %d %d %f\n",edges[i].node_a,edges[i].node_b,edges[i].weight);
+      // for(int i = 0; i< information[1]; i++){
+      //   printf("TEST vector post send %d %d %f\n",edges[i].node_a,edges[i].node_b,edges[i].weight);
+      // }
+      graph[information[0]] = priority_queue<Edge, vector<Edge>, CompareWeight>();
+
+      for(int k = 0; k < information[1]; k++){
+        graph[information[0]].push(edges[k]);
       }
+
     }
     
   }
@@ -440,6 +454,8 @@ main(int argc, char **argv)
     for(int i= 1; i< numtasks; i++){
       recieve_edges(i);
     }
+
+    snapshot();
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
