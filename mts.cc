@@ -219,7 +219,7 @@ void boruvka(int process_id){
   fprintf(stderr, "Boruvka for process %d\n",process_id);
  
   for(int i =0; i< n_rows; i++){
-    // fprintf(stderr, "Component %d \n",i);
+    fprintf(stderr, "Component %d \n",i);
     while(!graph[i].empty()){
       // print_edge(graph[0].top());
       Edge edge_to_merge = graph[i].top();
@@ -240,7 +240,7 @@ void boruvka(int process_id){
       };
       
     }
-    // fprintf(stderr, "Component %d done \n",i);
+    fprintf(stderr, "Component %d done \n",i);
     }
     // fprintf(stderr, "Total weigth: %f\n", total_weight); 
 }
@@ -248,6 +248,7 @@ void report_results(int nodes_with_no_edges){
   int number_of_trees = 0;
   double total_weight = 0;
   for(int i = 0; i< n_rows; i++){
+    fprintf(stderr,"REPORTIN results for %d \n",i);
     if(!trees[i].empty()){
       double weight = 0;
       fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
@@ -276,6 +277,38 @@ int find_nodes_with_no_edges(){
   printf("No edge %d\n", nodes_with_no_edges);
   return nodes_with_no_edges;
 }
+void send_trees(int task_id){
+  vector<int> ids;
+  vector<int> sizes;
+  for(int i =0; i< n_rows; i++){
+    if(node_ownership[i] == task_id){
+      ids.push_back(i);
+      sizes.push_back(trees[i].size());
+    }
+  }
+
+  int amount_of_trees = ids.size();
+
+  printf("AMOUNT OF trees before sending %d \n",amount_of_trees);
+  MPI_Send(&amount_of_trees, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+  for(int i = 0; i<amount_of_trees; i++){
+    int information[2] = {ids[i], sizes[i]};
+    // printf("ID %d size %d \n", ids[i],sizes[i]);
+    MPI_Send(&information, 2, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    if(sizes[i] != 0){
+        vector<Edge> trees_to_send = trees[information[0]];
+      
+        // for(int i = 0; i< trees_to_send.size(); i++){
+        //   print_edge(trees_to_send[i]);
+        // }
+        MPI_Send(&trees_to_send[0],sizes[i], mpi_edge_type,0, 0, MPI_COMM_WORLD);
+       
+    }
+    
+  }
+
+}
+
 void send_edges(int task_id){
   vector<int> ids;
   vector<int> sizes;
@@ -285,9 +318,9 @@ void send_edges(int task_id){
       sizes.push_back(graph[i].size());
     }
   }
-  for(int i =0; i< int(ids.size()); i++){
-    printf("ID %d size %d \n", ids[i],sizes[i]);
-  }
+  // for(int i =0; i< int(ids.size()); i++){
+  //   printf("ID %d size %d \n", ids[i],sizes[i]);
+  // }
   // throw;
   int amount_of_components = ids.size();
 
@@ -295,7 +328,7 @@ void send_edges(int task_id){
   MPI_Send(&amount_of_components, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   for(int i = 0; i<amount_of_components; i++){
     int information[2] = {ids[i], sizes[i]};
-    printf("ID %d size %d \n", ids[i],sizes[i]);
+    // printf("ID %d size %d \n", ids[i],sizes[i]);
     MPI_Send(&information, 2, MPI_INT, 0, 0, MPI_COMM_WORLD);
     if(sizes[i] != 0){
         vector<Edge> edges;
@@ -303,15 +336,15 @@ void send_edges(int task_id){
           edges.push_back(graph[information[0]].top());
           graph[information[0]].pop();
         }
-        printf("Size %d\n",sizes[i]);
+        // printf("Size %d\n",sizes[i]);
 
       //   for(int k = 0; k< sizes[i]; k++){
       //   printf("TEST vector pre send %d %d %f\n",edges[k].node_a,edges[k].node_b,edges[k].weight);
       // }
-        MPI_Send(&edges[0],sizes[i], mpi_edge_type,0, 0, MPI_COMM_WORLD);
+        
+      MPI_Send(&edges[0],sizes[i], mpi_edge_type,0, 0, MPI_COMM_WORLD);
        
     }
-    
   }
 
 }
@@ -321,12 +354,12 @@ void recieve_edges(int task_id){
   int amount_of_components;
   MPI_Recv(&amount_of_components, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  printf("amount of components %d\n",amount_of_components);
+  // printf("amount of components %d\n",amount_of_components);
   for(int i = 0; i<amount_of_components; i++){
     int information[2];
     MPI_Recv(&information, 2, MPI_INT, 1, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
   
-    printf("INFO %d %d \n", information[0],information[1]);
+    // printf("INFO %d %d \n", information[0],information[1]);
 
     if(information[1] == 0 ){
       graph[information[0]] = priority_queue<Edge, vector<Edge>, CompareWeight>();
@@ -343,6 +376,39 @@ void recieve_edges(int task_id){
       for(int k = 0; k < information[1]; k++){
         graph[information[0]].push(edges[k]);
       }
+    
+  }
+  }
+}
+
+void recieve_trees(int task_id){
+  printf("Recieveing trees from %d\n", task_id);
+  int amount_of_trees;
+  MPI_Recv(&amount_of_trees, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  // printf("amount of components %d\n",amount_of_trees);
+  for(int i = 0; i<amount_of_trees; i++){
+    int information[2];
+    MPI_Recv(&information, 2, MPI_INT, 1, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+  
+    // printf("INFO %d %d \n", information[0],information[1]);
+
+    if(information[1] == 0 ){
+      // fprintf(stderr, "ZEROO\n");
+      if(!trees[information[0]].empty()){
+        fprintf(stderr, "WIERDDDD");
+        throw;
+      }
+      trees[information[0]] = vector<Edge>();
+    }else{
+      vector<Edge> recived_trees;
+      recived_trees.resize(information[1]);
+
+      MPI_Recv(&recived_trees[0], information[1], mpi_edge_type, 1, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+      // for(int i = 0; i< information[1]; i++){
+      //   printf("TEST vector post send %d %d %f\n",edges[i].node_a,edges[i].node_b,edges[i].weight);
+      // }
+      trees[information[0]] = recived_trees;
 
     }
     
@@ -424,19 +490,33 @@ main(int argc, char **argv)
     report_results(nodes_with_no_edges);
     return 0;
   }
+
   divide_nodes(0,numtasks);
   // show_node_assignment();
+
+  // boruvka(0);
+  // boruvka(1);
+
+  // // snapshot();
+
+  // boruvka(-1);
+  // report_results(nodes_with_no_edges);
+  // throw;
+  
   boruvka(taskid);
   if(taskid != 0){
     // int test_array[3];
     // test_array[2] = 999;
-    for(int i= 0; i < n_rows; i++){
-      printf("Location pre send %d \n", node_location[i]);
-    }
+    // for(int i= 0; i < n_rows; i++){
+    //   printf("Location pre send %d \n", node_location[i]);
+    // }
    
     MPI_Send(&node_location, n_rows, MPI_INT, 0, 0, MPI_COMM_WORLD);
 
     send_edges(taskid);
+    send_trees(taskid);
+
+    MPI_Finalize();
     
   }
 
@@ -453,13 +533,20 @@ main(int argc, char **argv)
     // status_merging();
     for(int i= 1; i< numtasks; i++){
       recieve_edges(i);
+      recieve_trees(i);
     }
 
-    snapshot();
+    // snapshot();
+    fprintf(stderr, "VOOR borouvka\n ");
+    
+    boruvka(-1);
+    fprintf(stderr,"Done merging \n");
+    report_results(nodes_with_no_edges);
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
     fprintf(stdout, "%.20f\n", elapsed_time.count());
+    MPI_Finalize();
   }
 
   return 0;
