@@ -89,6 +89,30 @@ void snapshot_trees(){
   }
 }
 
+void hash_trees(){
+  int size =0;
+  for(int i = 0; i < n_rows; i++){
+    size += int(trees[i].size());
+  }
+  fprintf(stderr, "SIZE OF All treees %d\n", size);
+}
+
+void hash_edges(){
+  int size =0;
+  for(int i = 0; i < n_rows; i++){
+    size += int(graph[i].size());
+  }
+  fprintf(stderr, "SIZE OF All ownership %d\n", size);
+}
+
+void hash_ownership(){
+  int size =0;
+  for(int i = 0; i < n_rows; i++){
+    size += node_ownership[i];
+  }
+  fprintf(stderr, "SIZE OF All edges %d\n", size);
+}
+
 double retrive_value(int row, int column){
    for(int idx = row_ptr_begin[row]; idx <= row_ptr_end[row]; idx++){
     if(column == col_ind[idx]){
@@ -101,6 +125,7 @@ double retrive_value(int row, int column){
 void divide_nodes(int starting_node, int amount_of_process){
   int process_id = 0;
   int amount_of_nodes_per_process = n_rows/amount_of_process;
+  // throw;
 
   int nodes_assigned = 0;
 
@@ -111,16 +136,18 @@ void divide_nodes(int starting_node, int amount_of_process){
     for(int idx = row_ptr_begin[starting_node]; idx<= row_ptr_end[starting_node]; idx++){
           if(!visited_nodes[col_ind[idx]]){
             // fprintf(stderr," %d",col_ind[idx]);  
-            to_visit.push(col_ind[idx]);
-            visited_nodes[col_ind[idx]] = true;
-
-
-            node_ownership[col_ind[idx]] = process_id;
             nodes_assigned = nodes_assigned + 1;
             if(nodes_assigned >= amount_of_nodes_per_process){
               process_id = process_id + 1;
               nodes_assigned = 0;
             }
+            to_visit.push(col_ind[idx]);
+            visited_nodes[col_ind[idx]] = true;
+
+
+            node_ownership[col_ind[idx]] = process_id;
+            
+          
           }
     }
     // fprintf(stderr,"%d \n",starting_node);
@@ -261,13 +288,13 @@ void report_results(int nodes_with_no_edges){
     // fprintf(stderr,"REPORTIN results for %d \n",i);
     if(!trees[i].empty()){
       double weight = 0;
-      fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
+      // fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
       for(int k = 0; k < int(trees[i].size()); k++){
         Edge edge = trees[i][k];
-        print_edge(edge);
+        // print_edge(edge);
         weight += edge.weight;
       }
-      fprintf(stderr, "Weight for tree %d: %f\n",number_of_trees ,weight);
+      // fprintf(stderr, "Weight for tree %d: %f\n",number_of_trees ,weight);
       number_of_trees +=1;
       total_weight += weight;
     }
@@ -496,25 +523,28 @@ main(int argc, char **argv)
   auto start_time = std::chrono::high_resolution_clock::now();
   
   setup_location_array();
-  if(numtasks == 1){
-    boruvka(-1);
-    report_results(nodes_with_no_edges);
-    return 0;
-  }
-
+  // if(numtasks == 1){
+  //   boruvka(-1);
+  //   report_results(nodes_with_no_edges);
+  //   return 0;
+  // }
+ 
   divide_nodes(0,numtasks);
   // show_node_assignment();
 
   // boruvka(0);
   // boruvka(1);
 
-  // // // snapshot();
-  // snapshot_trees();
+  // // // // snapshot();
+  // // snapshot_trees();
+  // // hash_ownership();
 
   // boruvka(-1);
   // report_results(nodes_with_no_edges);
   // throw;
+  // fprintf(stderr, "DONE %d\n",taskid);
   
+  // return 0;
   boruvka(taskid);
   if(taskid != 0){
     // int test_array[3];
@@ -553,7 +583,8 @@ main(int argc, char **argv)
     //  snapshot_trees();
 
     fprintf(stderr, "VOOR borouvka\n ");
-    
+    hash_ownership();
+    // throw;
     boruvka(-1);
     fprintf(stderr,"Done merging \n");
     report_results(nodes_with_no_edges);
