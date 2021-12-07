@@ -79,6 +79,16 @@ void snapshot(){
   }
 }
 
+void snapshot_trees(){
+  for(int i = 0; i < n_rows; i++){
+    fprintf(stderr,"ID = %d size = %d \n",i,int(trees[i].size()));
+    if(trees[i].size() != 0){
+      print_edge(trees[i][0]);
+    }
+    fprintf(stderr, "\n");
+  }
+}
+
 double retrive_value(int row, int column){
    for(int idx = row_ptr_begin[row]; idx <= row_ptr_end[row]; idx++){
     if(column == col_ind[idx]){
@@ -219,7 +229,7 @@ void boruvka(int process_id){
   fprintf(stderr, "Boruvka for process %d\n",process_id);
  
   for(int i =0; i< n_rows; i++){
-    fprintf(stderr, "Component %d \n",i);
+    // fprintf(stderr, "Component %d \n",i);
     while(!graph[i].empty()){
       // print_edge(graph[0].top());
       Edge edge_to_merge = graph[i].top();
@@ -240,7 +250,7 @@ void boruvka(int process_id){
       };
       
     }
-    fprintf(stderr, "Component %d done \n",i);
+    // fprintf(stderr, "Component %d done \n",i);
     }
     // fprintf(stderr, "Total weigth: %f\n", total_weight); 
 }
@@ -248,7 +258,7 @@ void report_results(int nodes_with_no_edges){
   int number_of_trees = 0;
   double total_weight = 0;
   for(int i = 0; i< n_rows; i++){
-    fprintf(stderr,"REPORTIN results for %d \n",i);
+    // fprintf(stderr,"REPORTIN results for %d \n",i);
     if(!trees[i].empty()){
       double weight = 0;
       fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
@@ -401,6 +411,7 @@ void recieve_trees(int task_id){
       }
       trees[information[0]] = vector<Edge>();
     }else{
+      // trees[information[0]] = vector<Edge>();
       vector<Edge> recived_trees;
       recived_trees.resize(information[1]);
 
@@ -497,7 +508,8 @@ main(int argc, char **argv)
   // boruvka(0);
   // boruvka(1);
 
-  // // snapshot();
+  // // // snapshot();
+  // snapshot_trees();
 
   // boruvka(-1);
   // report_results(nodes_with_no_edges);
@@ -515,6 +527,7 @@ main(int argc, char **argv)
 
     send_edges(taskid);
     send_trees(taskid);
+    
 
     MPI_Finalize();
     
@@ -537,6 +550,8 @@ main(int argc, char **argv)
     }
 
     // snapshot();
+    //  snapshot_trees();
+
     fprintf(stderr, "VOOR borouvka\n ");
     
     boruvka(-1);
