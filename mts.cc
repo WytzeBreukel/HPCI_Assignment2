@@ -49,7 +49,7 @@ static vector <Edge> trees[max_n_rows];
 queue<int> to_visit;
 static bool visited_nodes[max_n_rows];
 
-// static double total_weight = 0;
+static double total_weight = 0;
 
 static int node_ownership[max_n_rows];
 MPI_Datatype mpi_edge_type;
@@ -202,6 +202,9 @@ void update_mst(Edge edge){
 
     trees[node_location[edge.node_a]].push_back(edge);
 
+    total_weight += edge.weight;
+    
+
 }
 void merge(Edge edge){
 
@@ -236,7 +239,7 @@ void merge(Edge edge){
     //   show_edges(7);
     //   throw;
     // }
-  }
+}
 bool is_self_edge(int node_a, int node_b){
   return node_location[node_a] == node_location[node_b];
 }
@@ -529,22 +532,17 @@ main(int argc, char **argv)
   //   return 0;
   // }
  
-  divide_nodes(0,numtasks);
+  divide_nodes(0,2);
   // show_node_assignment();
-
-  // boruvka(0);
-  // boruvka(1);
-
-  // // // // snapshot();
-  // // snapshot_trees();
-  // // hash_ownership();
-
-  // boruvka(-1);
-  // report_results(nodes_with_no_edges);
-  // throw;
-  // fprintf(stderr, "DONE %d\n",taskid);
+  boruvka(0);
+  boruvka(1);
   
-  // return 0;
+  // status_merging();
+  
+  boruvka(-1);
+  fprintf(stderr, "TOTAL WEIGHT %f\n", total_weight);
+  report_results(nodes_with_no_edges);
+  return 0;
   boruvka(taskid);
   if(taskid != 0){
     // int test_array[3];
