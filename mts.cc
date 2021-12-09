@@ -28,12 +28,13 @@ struct CompareWeight {
         return edge1.weight > edge2.weight;
     }
 };
-const int max_n_elements = 214748368;
+const int max_n_elements = 92493820;
 // const int max_n_elements = 131072;
 // const int max_n_elements = 760648352;
 // const int max_n_rows = 16384;
 // const int max_n_rows =  27993600;
-const int max_n_rows =  	952203;
+              
+const int max_n_rows =	999205;
 int nnz, n_rows, n_cols;
 static double values[max_n_elements];
 
@@ -122,38 +123,46 @@ double retrive_value(int row, int column){
   return 0; 
 }
 
-void divide_nodes(int starting_node, int amount_of_process){
+void divide_nodes(int amount_of_process){
   int process_id = 0;
   int amount_of_nodes_per_process = n_rows/amount_of_process;
   // throw;
 
   int nodes_assigned = 0;
 
-  visited_nodes[starting_node] = true;
-  // fprintf(stderr," %d",starting_node);
-  to_visit.push(starting_node);
-  while(!to_visit.empty()){
-    for(int idx = row_ptr_begin[starting_node]; idx<= row_ptr_end[starting_node]; idx++){
-          if(!visited_nodes[col_ind[idx]]){
-            // fprintf(stderr," %d",col_ind[idx]);  
-            nodes_assigned = nodes_assigned + 1;
-            if(nodes_assigned >= amount_of_nodes_per_process){
-              process_id = process_id + 1;
-              nodes_assigned = 0;
-            }
-            to_visit.push(col_ind[idx]);
-            visited_nodes[col_ind[idx]] = true;
 
 
-            node_ownership[col_ind[idx]] = process_id;
+  for(int i = 0; i < n_rows; i++){
+  int starting_node = i;
+  if(!visited_nodes[starting_node]){
+    visited_nodes[starting_node] = true;
+    // fprintf(stderr," %d",starting_node);
+
+    to_visit.push(starting_node);
+    while(!to_visit.empty()){
+      for(int idx = row_ptr_begin[starting_node]; idx<= row_ptr_end[starting_node]; idx++){
+            if(!visited_nodes[col_ind[idx]]){
+              // fprintf(stderr," %d",col_ind[idx]);  
+              nodes_assigned = nodes_assigned + 1;
+              if(nodes_assigned >= amount_of_nodes_per_process){
+                process_id = process_id + 1;
+                nodes_assigned = 0;
+              }
+              to_visit.push(col_ind[idx]);
+              visited_nodes[col_ind[idx]] = true;
+
+
+              node_ownership[col_ind[idx]] = process_id;
+              
             
-          
-          }
+            }
+      }
+      // fprintf(stderr,"%d \n",starting_node);
+      to_visit.pop();
+      starting_node = to_visit.front();
+      // fprintf(stderr,"\n");
     }
-    // fprintf(stderr,"%d \n",starting_node);
-    to_visit.pop();
-    starting_node = to_visit.front();
-    // fprintf(stderr,"\n");
+  }
   }
 }
 
@@ -535,7 +544,7 @@ main(int argc, char **argv)
     return 0;
   }
  
-  divide_nodes(0,numtasks);
+  divide_nodes(numtasks);
   // show_node_assignment();
   // boruvka(0);
   // boruvka(1);
