@@ -443,10 +443,10 @@ void recieve_trees(int task_id){
   // printf("amount of components %d\n",amount_of_trees);
   for(int i = 1; i<amount_of_trees; i++){
     int information[2];
-    printf("RECIVEDing TREE  INFO for %d  \n",i);
+    // printf("RECIVEDing TREE  INFO for %d  \n",i);
     MPI_Recv(&information, 2, MPI_INT, task_id, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
   
-    printf("RECIVED INFO %d %d \n", information[0],information[1]);
+    // printf("RECIVED INFO %d %d \n", information[0],information[1]);
 
     if(information[1] == 0 ){
       // fprintf(stderr, "ZEROO\n");
