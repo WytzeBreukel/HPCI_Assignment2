@@ -208,12 +208,12 @@ void update_mst(Edge edge){
 }
 void merge(Edge edge){
 
-    if(graph[node_location[edge.node_b]].empty()){
-      // fprintf(stderr, "Link to empty! \n");
-      //CHECK THIS
-      node_location[edge.node_b] = node_location[edge.node_a];
-      return;
-    }
+    // if(graph[node_location[edge.node_b]].empty()){
+    //   // fprintf(stderr, "Link to empty! \n");
+    //   //CHECK THIS
+    //   node_location[edge.node_b] = node_location[edge.node_a];
+    //   return;
+    // }
     // fprintf(stderr, "In MST %d - %d \n",edge.node_a, edge.node_b);
     //Dangerous optimazation!!!!!!!!!!!
     // if(graph[node_a].size() < graph[node_b].size()){
@@ -230,8 +230,14 @@ void merge(Edge edge){
     }
 
     update_mst(edge);
-    node_location[node_location[edge.node_b]] = node_location[edge.node_a];
-    node_location[edge.node_b] = node_location[edge.node_a];
+
+    int temp = node_location[edge.node_b ];
+    for(int i = 0; i < n_rows;i++)
+    {
+        if(node_location[i] == temp){
+        node_location[ i ] = node_location[edge.node_a]; 
+      }
+    }
 
    
     // if(node_a == 5 && node_b == 6){
