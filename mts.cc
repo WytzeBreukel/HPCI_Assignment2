@@ -348,8 +348,9 @@ void send_trees(int task_id){
   MPI_Send(&amount_of_trees, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   for(int i = 0; i<amount_of_trees; i++){
     int information[2] = {ids[i], sizes[i]};
-    // printf("ID %d size %d \n", ids[i],sizes[i]);
+    // printf("SENDING TREE ID %d size %d \n", ids[i],sizes[i]);
     MPI_Send(&information, 2, MPI_INT, 0, 0, MPI_COMM_WORLD);
+    // printf("COMPLETED SENDING TREE ID %d size %d \n", ids[i],sizes[i]);
     if(sizes[i] != 0){
         vector<Edge> trees_to_send = trees[information[0]];
       
@@ -404,12 +405,12 @@ void send_edges(int task_id){
 void recieve_edges(int task_id){
   printf("Recieveing components from %d\n", task_id);
   int amount_of_components;
-  MPI_Recv(&amount_of_components, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Recv(&amount_of_components, 1, MPI_INT, task_id, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  // printf("amount of components %d\n",amount_of_components);
+  printf("amount of components from %d: %d\n",task_id, amount_of_components);
   for(int i = 0; i<amount_of_components; i++){
     int information[2];
-    MPI_Recv(&information, 2, MPI_INT, 1, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+    MPI_Recv(&information, 2, MPI_INT, task_id, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
   
     // printf("INFO %d %d \n", information[0],information[1]);
 
@@ -419,7 +420,7 @@ void recieve_edges(int task_id){
       vector<Edge> edges;
       edges.resize(information[1]);
 
-      MPI_Recv(&edges[0], information[1], mpi_edge_type, 1, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+      MPI_Recv(&edges[0], information[1], mpi_edge_type, task_id, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
       // for(int i = 0; i< information[1]; i++){
       //   printf("TEST vector post send %d %d %f\n",edges[i].node_a,edges[i].node_b,edges[i].weight);
       // }
@@ -436,14 +437,16 @@ void recieve_edges(int task_id){
 void recieve_trees(int task_id){
   printf("Recieveing trees from %d\n", task_id);
   int amount_of_trees;
-  MPI_Recv(&amount_of_trees, 1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Recv(&amount_of_trees, 1, MPI_INT, task_id, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
+  printf("amount of trees from %d: %d\n",task_id, amount_of_trees);
   // printf("amount of components %d\n",amount_of_trees);
-  for(int i = 0; i<amount_of_trees; i++){
+  for(int i = 1; i<amount_of_trees; i++){
     int information[2];
-    MPI_Recv(&information, 2, MPI_INT, 1, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+    printf("RECIVEDing TREE  INFO for %d  \n",i);
+    MPI_Recv(&information, 2, MPI_INT, task_id, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
   
-    // printf("INFO %d %d \n", information[0],information[1]);
+    printf("RECIVED INFO %d %d \n", information[0],information[1]);
 
     if(information[1] == 0 ){
       // fprintf(stderr, "ZEROO\n");
@@ -457,7 +460,7 @@ void recieve_trees(int task_id){
       vector<Edge> recived_trees;
       recived_trees.resize(information[1]);
 
-      MPI_Recv(&recived_trees[0], information[1], mpi_edge_type, 1, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+      MPI_Recv(&recived_trees[0], information[1], mpi_edge_type, task_id, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
       // for(int i = 0; i< information[1]; i++){
       //   printf("TEST vector post send %d %d %f\n",edges[i].node_a,edges[i].node_b,edges[i].weight);
       // }
@@ -570,14 +573,12 @@ main(int argc, char **argv)
 
   if(taskid == 0){
     
-    int received_location_array[max_n_rows];
-    MPI_Recv (&received_location_array,n_rows,MPI_INT,1,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+    for(int i = 1; i< numtasks; i++){
+      int received_location_array[max_n_rows];
+      MPI_Recv (&received_location_array,n_rows,MPI_INT,i,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 
-
-    // MPI_Recv(&recv,   1, mpi_edge_type, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    // printf(" Received: nodea = %d nodeb = %d , weight = %f\n",recv.node_a, recv.node_b, recv.weight);
-    merge_location_arrays(received_location_array);
-    
+      merge_location_arrays(received_location_array);
+    }
     // status_merging();
     for(int i= 1; i< numtasks; i++){
       recieve_edges(i);
