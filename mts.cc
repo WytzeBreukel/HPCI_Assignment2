@@ -297,13 +297,13 @@ void report_results(int nodes_with_no_edges){
     // fprintf(stderr,"REPORTIN results for %d \n",i);
     if(!trees[i].empty()){
       double weight = 0;
-      // fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
+      fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
       for(int k = 0; k < int(trees[i].size()); k++){
         Edge edge = trees[i][k];
         // print_edge(edge);
         weight += edge.weight;
       }
-      // fprintf(stderr, "Weight for tree %d: %f\n",number_of_trees ,weight);
+      fprintf(stderr, "Weight for tree %d: %f\n",number_of_trees ,weight);
       number_of_trees +=1;
       total_weight += weight;
     }
@@ -364,10 +364,7 @@ void send_edges(int task_id){
       sizes.push_back(graph[i].size());
     }
   }
-  // for(int i =0; i< int(ids.size()); i++){
-  //   printf("ID %d size %d \n", ids[i],sizes[i]);
-  // }
-  // throw;
+
   int amount_of_components = ids.size();
 
   printf("AMOUNT OF compents before sending %d \n",amount_of_components);
@@ -532,31 +529,26 @@ main(int argc, char **argv)
   auto start_time = std::chrono::high_resolution_clock::now();
   
   setup_location_array();
-  // if(numtasks == 1){
-  //   boruvka(-1);
-  //   report_results(nodes_with_no_edges);
-  //   return 0;
-  // }
+  if(numtasks == 1){
+    boruvka(-1);
+    report_results(nodes_with_no_edges);
+    return 0;
+  }
  
-  divide_nodes(0,2);
+  divide_nodes(0,numtasks);
   // show_node_assignment();
-  boruvka(0);
-  boruvka(1);
+  // boruvka(0);
+  // boruvka(1);
   
-  // status_merging();
+  // // status_merging();
   
-  boruvka(-1);
-  fprintf(stderr, "TOTAL WEIGHT %f\n", total_weight);
-  report_results(nodes_with_no_edges);
-  return 0;
+  // boruvka(-1);
+  // fprintf(stderr, "TOTAL WEIGHT %f\n", total_weight);
+  // report_results(nodes_with_no_edges);
+  // return 0;
   boruvka(taskid);
   if(taskid != 0){
-    // int test_array[3];
-    // test_array[2] = 999;
-    // for(int i= 0; i < n_rows; i++){
-    //   printf("Location pre send %d \n", node_location[i]);
-    // }
-   
+
     MPI_Send(&node_location, n_rows, MPI_INT, 0, 0, MPI_COMM_WORLD);
 
     send_edges(taskid);
@@ -587,7 +579,7 @@ main(int argc, char **argv)
     //  snapshot_trees();
 
     fprintf(stderr, "VOOR borouvka\n ");
-    hash_ownership();
+    // hash_ownership();
     // throw;
     boruvka(-1);
     fprintf(stderr,"Done merging \n");
