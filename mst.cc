@@ -179,7 +179,7 @@ void create_structs(){
     for(int idx = row_ptr_begin[i]; idx <= row_ptr_end[i]; idx++){
     
         graph[i].push(Edge(i,col_ind[idx],values[idx]));
-        graph[col_ind[idx]].push(Edge(col_ind[idx], i, values[idx]));
+        // graph[col_ind[idx]].push(Edge(col_ind[idx], i, values[idx]));
       }
     }
   }
