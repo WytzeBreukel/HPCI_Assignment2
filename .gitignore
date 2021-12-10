@@ -1,4 +1,4 @@
 *.o
-mts
+mst
 matrices/mouse_gene.mtx
 matrices/ldoor.mtx

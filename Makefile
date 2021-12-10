@@ -5,9 +5,9 @@ CXX = mpic++
 CFLAGS = -Wall -Wextra -Wno-unused-result -Wno-unused-parameter -Wno-unused-but-set-variable -O3 -g -mcmodel=medium
 CXXFLAGS = $(CFLAGS) -std=c++11
 
-all:	mts
+all:	mst
 
-mts: mts.o mmio.o matrix.o
+mst: mst.o mmio.o matrix.o
 	$(CXX) $(CFLAGS) -o $@ $^
 
 
@@ -19,4 +19,4 @@ mmio.o:	mmio.c
 
 clean:
 	rm -f *o
-	rm -f mts
+	rm -f mst
