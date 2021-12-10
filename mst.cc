@@ -600,7 +600,7 @@ main(int argc, char **argv)
     // throw;
     boruvka(-1);
     fprintf(stderr,"Done merging \n");
-    report_results();
+    // report_results();
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
@@ -612,6 +612,8 @@ main(int argc, char **argv)
     fprintf(stdout, "Deivide_nodes  %.20f\n", divide_nodes_time_elapsed.count());
     fprintf(stdout, "boruvka_time  %.20f\n", boruvka_time.count());
     fprintf(stdout, " Total time %.20f\n", elapsed_time.count());
+
+    
     MPI_Finalize();
   }
 
