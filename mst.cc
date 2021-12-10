@@ -29,10 +29,7 @@ struct CompareWeight {
     }
 };
 const int max_n_elements = 92493820;
-// const int max_n_elements = 131072;
-// const int max_n_elements = 760648352;
-// const int max_n_rows = 16384;
-// const int max_n_rows =  27993600;
+
               
 const int max_n_rows =	999205;
 int nnz, n_rows, n_cols;
@@ -54,8 +51,6 @@ static double total_weight = 0;
 
 static int node_ownership[max_n_rows];
 MPI_Datatype mpi_edge_type;
-
-
 
 
 void status_update(){
@@ -126,7 +121,6 @@ double retrive_value(int row, int column){
 void divide_nodes(int amount_of_process){
   int process_id = 0;
   int amount_of_nodes_per_process = n_rows/amount_of_process;
-  // throw;
 
   int nodes_assigned = 0;
 
@@ -136,13 +130,11 @@ void divide_nodes(int amount_of_process){
   int starting_node = i;
   if(!visited_nodes[starting_node]){
     visited_nodes[starting_node] = true;
-    // fprintf(stderr," %d",starting_node);
 
     to_visit.push(starting_node);
     while(!to_visit.empty()){
       for(int idx = row_ptr_begin[starting_node]; idx<= row_ptr_end[starting_node]; idx++){
             if(!visited_nodes[col_ind[idx]]){
-              // fprintf(stderr," %d",col_ind[idx]);  
               nodes_assigned = nodes_assigned + 1;
               if(nodes_assigned >= amount_of_nodes_per_process){
                 process_id = process_id + 1;
@@ -157,10 +149,8 @@ void divide_nodes(int amount_of_process){
             
             }
       }
-      // fprintf(stderr,"%d \n",starting_node);
       to_visit.pop();
       starting_node = to_visit.front();
-      // fprintf(stderr,"\n");
     }
   }
   }
@@ -183,12 +173,6 @@ void show_edges(int node){
     graph[node].pop();
   }
   throw;
-}
-void get_neighbours(int node){
- fprintf(stderr, "FOR %d \n",node);
-  for(int k = 0; k< n_rows;k++){
-    fprintf(stderr, "%d %f \n",k, retrive_value(node,k));
-  }
 }
 void create_structs(){
   for(int i = 0; i < n_rows; i++){
@@ -217,25 +201,11 @@ void update_mst(Edge edge){
 }
 void merge(Edge edge){
 
-    // if(graph[node_location[edge.node_b]].empty()){
-    //   // fprintf(stderr, "Link to empty! \n");
-    //   //CHECK THIS
-    //   node_location[edge.node_b] = node_location[edge.node_a];
-    //   return;
-    // }
-    // fprintf(stderr, "In MST %d - %d \n",edge.node_a, edge.node_b);
-    //Dangerous optimazation!!!!!!!!!!!
-    // if(graph[node_a].size() < graph[node_b].size()){
-    //   fprintf(stderr, "SWAPP");
-    //   swap(graph[node_a], graph[node_b]);
-    // }
-    
     while(!graph[node_location[edge.node_b]].empty()){
-        // fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
-        // fprintf(stderr,"node_a %d node_B %d location_node_a %d location_node_b %d \n", node_a, node_b, node_location[node_a], node_location[node_b]);
+ 
         graph[node_location[edge.node_a]].push(graph[node_location[edge.node_b]].top());
         graph[node_location[edge.node_b]].pop();
-        // fprintf(stderr,"IN MERGE size %d \n",int(graph[node_location[node_b]].size()));
+
     }
 
     update_mst(edge);
@@ -248,12 +218,7 @@ void merge(Edge edge){
       }
     }
 
-   
-    // if(node_a == 5 && node_b == 6){
-    //   status_merging();
-    //   show_edges(7);
-    //   throw;
-    // }
+
 }
 bool is_self_edge(int node_a, int node_b){
   return node_location[node_a] == node_location[node_b];
@@ -274,19 +239,18 @@ void boruvka(int process_id){
   fprintf(stderr, "Boruvka for process %d\n",process_id);
  
   for(int i =0; i< n_rows; i++){
-    // fprintf(stderr, "Component %d \n",i);
+
     while(!graph[i].empty()){
-      // print_edge(graph[0].top());
+
       Edge edge_to_merge = graph[i].top();
 
       if(is_outside_of_process(process_id, edge_to_merge.node_b) ||  is_outside_of_process(process_id, edge_to_merge.node_a)){
-        // print_edge(edge_to_merge);
-        // fprintf(stderr, "Is outside of process\n");
+   
         break;
       }
 
       if(is_self_edge(edge_to_merge.node_a,edge_to_merge.node_b)){
-        // fprintf(stderr, "self edge\n");
+
         graph[i].pop();
       }else{
         graph[i].pop();
@@ -295,15 +259,15 @@ void boruvka(int process_id){
       };
       
     }
-    // fprintf(stderr, "Component %d done \n",i);
+
     }
-    // fprintf(stderr, "Total weigth: %f\n", total_weight); 
+
 }
 void report_results(){
   int number_of_trees = 0;
   double total_weight = 0;
   for(int i = 0; i< n_rows; i++){
-    // fprintf(stderr,"REPORTIN results for %d \n",i);
+  
     if(!trees[i].empty()){
       double weight = 0;
       // fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
@@ -330,7 +294,6 @@ int find_nodes_with_no_edges(){
       nodes_with_no_edges +=1;
     }
   }
-  printf("No edge %d\n", nodes_with_no_edges);
   return nodes_with_no_edges;
 }
 void send_trees(int task_id){
@@ -345,19 +308,15 @@ void send_trees(int task_id){
 
   int amount_of_trees = ids.size();
 
-  printf("AMOUNT OF trees before sending %d \n",amount_of_trees);
   MPI_Send(&amount_of_trees, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   for(int i = 0; i<amount_of_trees; i++){
     int information[2] = {ids[i], sizes[i]};
-    // printf("SENDING TREE ID %d size %d \n", ids[i],sizes[i]);
+
     MPI_Send(&information, 2, MPI_INT, 0, 0, MPI_COMM_WORLD);
-    // printf("COMPLETED SENDING TREE ID %d size %d \n", ids[i],sizes[i]);
+  
     if(sizes[i] != 0){
         vector<Edge> trees_to_send = trees[information[0]];
       
-        // for(int i = 0; i< trees_to_send.size(); i++){
-        //   print_edge(trees_to_send[i]);
-        // }
         MPI_Send(&trees_to_send[0],sizes[i], mpi_edge_type,0, 0, MPI_COMM_WORLD);
        
     }
@@ -378,7 +337,6 @@ void send_edges(int task_id){
 
   int amount_of_components = ids.size();
 
-  printf("AMOUNT OF compents before sending %d \n",amount_of_components);
   MPI_Send(&amount_of_components, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
   for(int i = 0; i<amount_of_components; i++){
     int information[2] = {ids[i], sizes[i]};
@@ -390,11 +348,6 @@ void send_edges(int task_id){
           edges.push_back(graph[information[0]].top());
           graph[information[0]].pop();
         }
-        // printf("Size %d\n",sizes[i]);
-
-      //   for(int k = 0; k< sizes[i]; k++){
-      //   printf("TEST vector pre send %d %d %f\n",edges[k].node_a,edges[k].node_b,edges[k].weight);
-      // }
         
       MPI_Send(&edges[0],sizes[i], mpi_edge_type,0, 0, MPI_COMM_WORLD);
        
@@ -404,16 +357,13 @@ void send_edges(int task_id){
 }
 
 void recieve_edges(int task_id){
-  printf("Recieveing components from %d\n", task_id);
   int amount_of_components;
   MPI_Recv(&amount_of_components, 1, MPI_INT, task_id, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  printf("amount of components from %d: %d\n",task_id, amount_of_components);
   for(int i = 0; i<amount_of_components; i++){
     int information[2];
     MPI_Recv(&information, 2, MPI_INT, task_id, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
   
-    // printf("INFO %d %d \n", information[0],information[1]);
 
     if(information[1] == 0 ){
       graph[information[0]] = priority_queue<Edge, vector<Edge>, CompareWeight>();
@@ -422,9 +372,7 @@ void recieve_edges(int task_id){
       edges.resize(information[1]);
 
       MPI_Recv(&edges[0], information[1], mpi_edge_type, task_id, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-      // for(int i = 0; i< information[1]; i++){
-      //   printf("TEST vector post send %d %d %f\n",edges[i].node_a,edges[i].node_b,edges[i].weight);
-      // }
+
       graph[information[0]] = priority_queue<Edge, vector<Edge>, CompareWeight>();
 
       for(int k = 0; k < information[1]; k++){
@@ -436,35 +384,30 @@ void recieve_edges(int task_id){
 }
 
 void recieve_trees(int task_id){
-  printf("Recieveing trees from %d\n", task_id);
   int amount_of_trees;
   MPI_Recv(&amount_of_trees, 1, MPI_INT, task_id, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  printf("amount of trees from %d: %d\n",task_id, amount_of_trees);
-  // printf("amount of components %d\n",amount_of_trees);
+
   for(int i = 1; i<amount_of_trees; i++){
     int information[2];
-    // printf("RECIVEDing TREE  INFO for %d  \n",i);
+
     MPI_Recv(&information, 2, MPI_INT, task_id, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
   
-    // printf("RECIVED INFO %d %d \n", information[0],information[1]);
+
 
     if(information[1] == 0 ){
-      // fprintf(stderr, "ZEROO\n");
+ 
       if(!trees[information[0]].empty()){
         fprintf(stderr, "WIERDDDD");
         throw;
       }
       trees[information[0]] = vector<Edge>();
     }else{
-      // trees[information[0]] = vector<Edge>();
+
       vector<Edge> recived_trees;
       recived_trees.resize(information[1]);
 
       MPI_Recv(&recived_trees[0], information[1], mpi_edge_type, task_id, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-      // for(int i = 0; i< information[1]; i++){
-      //   printf("TEST vector post send %d %d %f\n",edges[i].node_a,edges[i].node_b,edges[i].weight);
-      // }
       trees[information[0]] = recived_trees;
 
     }
@@ -529,15 +472,11 @@ main(int argc, char **argv)
       return -1;
     }
 
-  /* For debugging, can be removed when implementation is finished. */
-  // dump_nonzeros(n_rows, values, col_ind, row_ptr_begin, row_ptr_end);
+
   auto start_time = std::chrono::high_resolution_clock::now();
   create_structs();
   fprintf(stderr,"Matrix converted to structs \n");
-  // int nodes_with_no_edges = 0;
-  // if(taskid == 0){
-  //   nodes_with_no_edges = find_nodes_with_no_edges();
-  // }
+
 
   auto create_structs_time = std::chrono::high_resolution_clock::now();
   
@@ -559,16 +498,7 @@ main(int argc, char **argv)
   divide_nodes(numtasks);
 
   auto divide_nodes_time = std::chrono::high_resolution_clock::now();
-  // show_node_assignment();
-  // boruvka(0);
-  // boruvka(1);
-  
-  // // status_merging();
-  
-  // boruvka(-1);
-  // fprintf(stderr, "TOTAL WEIGHT %f\n", total_weight);
-  // report_results(nodes_with_no_edges);
-  // return 0;
+
   
   boruvka(taskid);
   if(taskid != 0){
@@ -591,21 +521,16 @@ main(int argc, char **argv)
 
       merge_location_arrays(received_location_array);
     }
-    // status_merging();
+
     for(int i= 1; i< numtasks; i++){
       recieve_edges(i);
       recieve_trees(i);
     }
 
-    // snapshot();
-    //  snapshot_trees();
 
-    fprintf(stderr, "VOOR borouvka\n ");
-    // hash_ownership();
-    // throw;
+
     boruvka(-1);
-    fprintf(stderr,"Done merging \n");
-    // report_results();
+    report_results();
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
