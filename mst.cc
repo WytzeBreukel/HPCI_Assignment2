@@ -179,7 +179,6 @@ void create_structs(){
     for(int idx = row_ptr_begin[i]; idx <= row_ptr_end[i]; idx++){
     
         graph[i].push(Edge(i,col_ind[idx],values[idx]));
-        // graph[col_ind[idx]].push(Edge(col_ind[idx], i, values[idx]));
       }
     }
   }
@@ -236,7 +235,7 @@ void setup_location_array(){
   }
 }
 void boruvka(int process_id){
-  fprintf(stderr, "Boruvka for process %d\n",process_id);
+  // fprintf(stderr, "Boruvka for process %d\n",process_id);
  
   for(int i =0; i< n_rows; i++){
 
@@ -270,10 +269,10 @@ void report_results(){
   
     if(!trees[i].empty()){
       double weight = 0;
-      // fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
+      fprintf(stdout, "%d", int(trees[i].size()));
       for(int k = 0; k < int(trees[i].size()); k++){
         Edge edge = trees[i][k];
-        // print_edge(edge);
+        fprintf(stdout, "%d %d %.20f\n", edge.node_a, edge.node_b, edge.weight);
         weight += edge.weight;
       }
       // fprintf(stderr, "Weight for tree %d: %f\n",number_of_trees ,weight);
@@ -282,8 +281,7 @@ void report_results(){
     }
   }
   // fprintf(stderr, "There are %d trees with no edges making then total amount of trees: %d\n", nodes_with_no_edges, number_of_trees+nodes_with_no_edges);
-    fprintf(stderr, "Total amount of trees: %d\n", number_of_trees);
-  fprintf(stderr, "Weight for all trees %f\n",total_weight);
+  fprintf(stdout, "%.20f\n\n", total_weight);
 }
 
 int find_nodes_with_no_edges(){
@@ -396,11 +394,7 @@ void recieve_trees(int task_id){
 
 
     if(information[1] == 0 ){
- 
-      if(!trees[information[0]].empty()){
-        fprintf(stderr, "WIERDDDD");
-        throw;
-      }
+
       trees[information[0]] = vector<Edge>();
     }else{
 
@@ -455,9 +449,9 @@ main(int argc, char **argv)
   MPI_Type_commit(&mpi_edge_type);
   MPI_Comm_rank(MPI_COMM_WORLD,&taskid);
   MPI_Get_processor_name(hostname, &len);
-  printf ("Hello from task %d on %s!\n", taskid, hostname);
+  // printf ("Hello from task %d on %s!\n", taskid, hostname);
   if (taskid == 0){
-    printf("MASTER: Number of MPI tasks is: %d\n",numtasks);
+    // printf("MASTER: Number of MPI tasks is: %d\n",numtasks);
     }
 
   
@@ -475,7 +469,7 @@ main(int argc, char **argv)
 
   auto start_time = std::chrono::high_resolution_clock::now();
   create_structs();
-  fprintf(stderr,"Matrix converted to structs \n");
+  // fprintf(stderr,"Matrix converted to structs \n");
 
 
   auto create_structs_time = std::chrono::high_resolution_clock::now();
@@ -488,10 +482,11 @@ main(int argc, char **argv)
     std::chrono::duration<double> elapsed_time = end_time - start_time;
     std::chrono::duration<double> create_structs_elapsed_time = create_structs_time - start_time;
     std::chrono::duration<double> create_boruvka_elapsed_time = end_time - create_structs_time;
-    report_results();
-    fprintf(stdout, "Struct Time  %.20f\n", create_structs_elapsed_time.count());
-    fprintf(stdout, "boruvka_time  %.20f\n", create_boruvka_elapsed_time.count());
     fprintf(stdout, "%.20f\n", elapsed_time.count());
+    report_results();
+    // fprintf(stdout, "Struct Time  %.20f\n", create_structs_elapsed_time.count());
+    // fprintf(stdout, "boruvka_time  %.20f\n", create_boruvka_elapsed_time.count());
+    // fprintf(stdout, "%.20f\n", elapsed_time.count());
     return 0;
   }
  
@@ -530,18 +525,20 @@ main(int argc, char **argv)
 
 
     boruvka(-1);
-    report_results();
-
-    auto end_time = std::chrono::high_resolution_clock::now();
+      auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
     std::chrono::duration<double> struct_time_time_elapsed = create_structs_time - start_time;
     std::chrono::duration<double> divide_nodes_time_elapsed = divide_nodes_time - create_structs_time;
     std::chrono::duration<double> boruvka_time = end_time - divide_nodes_time;
+    fprintf(stdout, "%.20f\n", elapsed_time.count());
+    report_results();
 
-    fprintf(stdout, "Struct Time  %.20f\n", struct_time_time_elapsed.count());
-    fprintf(stdout, "Deivide_nodes  %.20f\n", divide_nodes_time_elapsed.count());
-    fprintf(stdout, "boruvka_time  %.20f\n", boruvka_time.count());
-    fprintf(stdout, " Total time %.20f\n", elapsed_time.count());
+  
+
+    // fprintf(stderr, "Struct Time  %.20f\n", struct_time_time_elapsed.count());
+    // fprintf(stderr, "Deivide_nodes  %.20f\n", divide_nodes_time_elapsed.count());
+    // fprintf(stderr, "boruvka_time  %.20f\n", boruvka_time.count());
+    // fprintf(stderr, " Total time %.20f\n", elapsed_time.count());
 
 
     MPI_Finalize();
