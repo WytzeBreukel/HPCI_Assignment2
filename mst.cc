@@ -299,7 +299,7 @@ void boruvka(int process_id){
     }
     // fprintf(stderr, "Total weigth: %f\n", total_weight); 
 }
-void report_results(int nodes_with_no_edges){
+void report_results(){
   int number_of_trees = 0;
   double total_weight = 0;
   for(int i = 0; i< n_rows; i++){
@@ -317,7 +317,8 @@ void report_results(int nodes_with_no_edges){
       total_weight += weight;
     }
   }
-  fprintf(stderr, "There are %d trees with no edges making then total amount of trees: %d\n", nodes_with_no_edges, number_of_trees+nodes_with_no_edges);
+  // fprintf(stderr, "There are %d trees with no edges making then total amount of trees: %d\n", nodes_with_no_edges, number_of_trees+nodes_with_no_edges);
+    fprintf(stderr, "Total amount of trees: %d\n", number_of_trees);
   fprintf(stderr, "Weight for all trees %f\n",total_weight);
 }
 
@@ -530,24 +531,29 @@ main(int argc, char **argv)
 
   /* For debugging, can be removed when implementation is finished. */
   // dump_nonzeros(n_rows, values, col_ind, row_ptr_begin, row_ptr_end);
+  auto start_time = std::chrono::high_resolution_clock::now();
   create_structs();
   fprintf(stderr,"Matrix converted to structs \n");
-  // show_lowest_edge();
-  // status_update();
-  int nodes_with_no_edges = 0;
-  if(taskid == 0){
-    nodes_with_no_edges = find_nodes_with_no_edges();
-  }
-  auto start_time = std::chrono::high_resolution_clock::now();
+  // int nodes_with_no_edges = 0;
+  // if(taskid == 0){
+  //   nodes_with_no_edges = find_nodes_with_no_edges();
+  // }
+
+  auto create_structs_time = std::chrono::high_resolution_clock::now();
   
   setup_location_array();
   if(numtasks == 1){
     boruvka(-1);
-    report_results(nodes_with_no_edges);
+    report_results();
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_time = end_time - start_time;
+    fprintf(stdout, "%.20f\n", elapsed_time.count());
     return 0;
   }
  
   divide_nodes(numtasks);
+
+  auto divide_nodes_time = std::chrono::high_resolution_clock::now();
   // show_node_assignment();
   // boruvka(0);
   // boruvka(1);
@@ -558,6 +564,7 @@ main(int argc, char **argv)
   // fprintf(stderr, "TOTAL WEIGHT %f\n", total_weight);
   // report_results(nodes_with_no_edges);
   // return 0;
+  
   boruvka(taskid);
   if(taskid != 0){
 
@@ -593,11 +600,18 @@ main(int argc, char **argv)
     // throw;
     boruvka(-1);
     fprintf(stderr,"Done merging \n");
-    report_results(nodes_with_no_edges);
+    report_results();
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
-    fprintf(stdout, "%.20f\n", elapsed_time.count());
+    std::chrono::duration<double> struct_time_time_elapsed = create_structs_time - start_time;
+    std::chrono::duration<double> divide_nodes_time_elapsed = divide_nodes_time - create_structs_time;
+    std::chrono::duration<double> boruvka_time = end_time - divide_nodes_time;
+
+    fprintf(stdout, "Struct Time  %.20f\n", struct_time_time_elapsed.count());
+    fprintf(stdout, "Deivide_nodes  %.20f\n", divide_nodes_time_elapsed.count());
+    fprintf(stdout, "boruvka_time  %.20f\n", boruvka_time.count());
+    fprintf(stdout, " Total time %.20f\n", elapsed_time.count());
     MPI_Finalize();
   }
 
