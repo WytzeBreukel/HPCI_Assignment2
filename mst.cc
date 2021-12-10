@@ -306,13 +306,13 @@ void report_results(){
     // fprintf(stderr,"REPORTIN results for %d \n",i);
     if(!trees[i].empty()){
       double weight = 0;
-      fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
+      // fprintf(stderr, "Edges for Tree %d\n",number_of_trees);
       for(int k = 0; k < int(trees[i].size()); k++){
         Edge edge = trees[i][k];
         // print_edge(edge);
         weight += edge.weight;
       }
-      fprintf(stderr, "Weight for tree %d: %f\n",number_of_trees ,weight);
+      // fprintf(stderr, "Weight for tree %d: %f\n",number_of_trees ,weight);
       number_of_trees +=1;
       total_weight += weight;
     }
@@ -543,10 +543,15 @@ main(int argc, char **argv)
   
   setup_location_array();
   if(numtasks == 1){
+    
     boruvka(-1);
-    report_results();
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time = end_time - start_time;
+    std::chrono::duration<double> create_structs_elapsed_time = create_structs_time - start_time;
+    std::chrono::duration<double> create_boruvka_elapsed_time = end_time - create_structs_time;
+    report_results();
+    fprintf(stdout, "Struct Time  %.20f\n", create_structs_elapsed_time.count());
+    fprintf(stdout, "boruvka_time  %.20f\n", create_boruvka_elapsed_time.count());
     fprintf(stdout, "%.20f\n", elapsed_time.count());
     return 0;
   }
@@ -613,7 +618,7 @@ main(int argc, char **argv)
     fprintf(stdout, "boruvka_time  %.20f\n", boruvka_time.count());
     fprintf(stdout, " Total time %.20f\n", elapsed_time.count());
 
-    
+
     MPI_Finalize();
   }
 
